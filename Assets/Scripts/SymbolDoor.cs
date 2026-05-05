@@ -81,6 +81,7 @@ public class SymbolDoor : MonoBehaviour
 
     public void HidePuzzle()
     {
+        isOpen = false;
         CleanupPuzzle();
         gameObject.SetActive(false);
     }
@@ -161,9 +162,9 @@ public class SymbolDoor : MonoBehaviour
 
     private IEnumerator DoorOpenRoutine()
     {
-        yield return new WaitForSeconds(doorOpenDelay);
+        yield return new WaitForSecondsRealtime(doorOpenDelay);
+        openRoutine = null;
         HidePuzzle();
-        isOpen = false;
     }
 
     private void StopOpenRoutine()

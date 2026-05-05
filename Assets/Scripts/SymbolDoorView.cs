@@ -511,7 +511,7 @@ public class SymbolDoorView : MonoBehaviour
 
         while (elapsed < duration)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.unscaledDeltaTime;
             cg.alpha = SymbolDoorUIDesign.EaseOutQuad(elapsed / duration);
             yield return null;
         }
@@ -603,7 +603,7 @@ public class SymbolDoorView : MonoBehaviour
 
         while (elapsed < duration)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.unscaledDeltaTime;
             float t = elapsed / duration;
             t = SymbolDoorUIDesign.EaseOutQuad(t);
             img.color = Color.Lerp(SymbolDoorUIDesign.DarkBg, targetColor, t);
@@ -622,7 +622,7 @@ public class SymbolDoorView : MonoBehaviour
             float elapsed = 0;
             while (elapsed < SymbolDoorUIDesign.ErrorFlashDuration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += Time.unscaledDeltaTime;
                 float t = elapsed / SymbolDoorUIDesign.ErrorFlashDuration;
                 img.color = Color.Lerp(original, SymbolDoorUIDesign.ErrorRed, t);
                 yield return null;
@@ -631,7 +631,7 @@ public class SymbolDoorView : MonoBehaviour
             elapsed = 0;
             while (elapsed < SymbolDoorUIDesign.ErrorFlashDuration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += Time.unscaledDeltaTime;
                 float t = elapsed / SymbolDoorUIDesign.ErrorFlashDuration;
                 img.color = Color.Lerp(SymbolDoorUIDesign.ErrorRed, original, t);
                 yield return null;
@@ -652,7 +652,7 @@ public class SymbolDoorView : MonoBehaviour
 
             while (elapsed < SymbolDoorUIDesign.SuccessPulseDuration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += Time.unscaledDeltaTime;
                 float t = elapsed / SymbolDoorUIDesign.SuccessPulseDuration;
                 t = SymbolDoorUIDesign.EaseOutQuad(t);
 
@@ -685,7 +685,7 @@ public class SymbolDoorView : MonoBehaviour
 
             while (elapsed < duration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += Time.unscaledDeltaTime;
                 float t = elapsed / duration;
 
                 doorCanvasGroup.alpha = Mathf.Lerp(1f, 0.3f, t);
@@ -698,7 +698,7 @@ public class SymbolDoorView : MonoBehaviour
             elapsed = 0;
             while (elapsed < duration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += Time.unscaledDeltaTime;
                 float t = elapsed / duration;
 
                 doorCanvasGroup.alpha = Mathf.Lerp(0.3f, 1f, t);

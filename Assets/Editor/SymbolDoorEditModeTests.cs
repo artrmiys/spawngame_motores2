@@ -1,7 +1,9 @@
 #if UNITY_EDITOR
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -131,6 +133,31 @@ public class SymbolDoorEditModeTests
         }
     }
 
+    [Test]
+    public void DoorOpenDelayUsesRealtimeWhileGameIsPaused()
+    {
+        GameObject doorObject = new GameObject("SymbolDoorRealtimeTest");
+
+        try
+        {
+            SymbolDoor door = doorObject.AddComponent<SymbolDoor>();
+            MethodInfo method = typeof(SymbolDoor).GetMethod("DoorOpenRoutine", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            Assert.IsNotNull(method);
+
+            Time.timeScale = 0f;
+            IEnumerator routine = (IEnumerator)method.Invoke(door, null);
+
+            Assert.IsTrue(routine.MoveNext());
+            Assert.IsInstanceOf<WaitForSecondsRealtime>(routine.Current);
+        }
+        finally
+        {
+            Time.timeScale = 1f;
+            UnityEngine.Object.DestroyImmediate(doorObject);
+        }
+    }
+
     private static void AssertRectStretchesToParent(RectTransform rect, string name)
     {
         Assert.IsNotNull(rect, name);
@@ -149,7 +176,8 @@ public static class SymbolDoorAutomatedTestRunner
             (nameof(SymbolDoorEditModeTests.DefaultBuilderCreatesThreeExpectedPairs), testClass.DefaultBuilderCreatesThreeExpectedPairs),
             (nameof(SymbolDoorEditModeTests.ModelAcceptsOnlyCompleteCorrectAnswers), testClass.ModelAcceptsOnlyCompleteCorrectAnswers),
             (nameof(SymbolDoorEditModeTests.ViewBuildsScalableButtonTiles), testClass.ViewBuildsScalableButtonTiles),
-            (nameof(SymbolDoorEditModeTests.ViewSetupRebuildDoesNotDuplicateTiles), testClass.ViewSetupRebuildDoesNotDuplicateTiles)
+            (nameof(SymbolDoorEditModeTests.ViewSetupRebuildDoesNotDuplicateTiles), testClass.ViewSetupRebuildDoesNotDuplicateTiles),
+            (nameof(SymbolDoorEditModeTests.DoorOpenDelayUsesRealtimeWhileGameIsPaused), testClass.DoorOpenDelayUsesRealtimeWhileGameIsPaused)
         };
 
         var lines = new List<string>();
