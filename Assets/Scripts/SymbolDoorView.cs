@@ -4,20 +4,22 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Refactor #5: Professional UX/UI Design
-/// Beautiful layout with proper spacing, shadows, visual hierarchy
+/// Runtime UI for the Symbol Door puzzle.
+/// Builds scalable button-like tiles that stay inside the screen.
 /// </summary>
 public class SymbolDoorView : MonoBehaviour
 {
+    private const float TileTextPadding = 10f;
+
     [SerializeField] private Canvas canvas;
     [SerializeField] private Image doorImage;
     [SerializeField] private CanvasGroup doorCanvasGroup;
     [SerializeField] private AudioClip successSound;
     [SerializeField] private AudioClip errorSound;
 
-    private Dictionary<string, SymbolButton> symbolMap = new();
-    private Dictionary<string, MeaningButton> meaningMap = new();
-    private Dictionary<string, RectTransform> connections = new();
+    private readonly Dictionary<string, SymbolButton> symbolMap = new();
+    private readonly Dictionary<string, MeaningButton> meaningMap = new();
+    private readonly Dictionary<string, RectTransform> connections = new();
     private Coroutine animationCoroutine;
 
     private LayoutGroup symbolLayout;
@@ -59,6 +61,7 @@ public class SymbolDoorView : MonoBehaviour
         }
 
         EnsureCanvas();
+        ClearExistingLayout();
         CreateMainLayout(symbols, meanings, controller);
         ApplyProfessionalStyling();
     }
@@ -87,48 +90,139 @@ public class SymbolDoorView : MonoBehaviour
             gameObject.AddComponent<GraphicRaycaster>();
     }
 
+    private void ClearExistingLayout()
+    {
+        if (animationCoroutine != null)
+        {
+            StopCoroutine(animationCoroutine);
+            animationCoroutine = null;
+        }
+
+        for (int i = canvas.transform.childCount - 1; i >= 0; i--)
+            DestroyObject(canvas.transform.GetChild(i).gameObject);
+
+        symbolMap.Clear();
+        meaningMap.Clear();
+        connections.Clear();
+
+        symbolLayout = null;
+        meaningLayout = null;
+        symbolContainer = null;
+        meaningContainer = null;
+        checkButton = null;
+        resetButton = null;
+        doorImage = null;
+        doorCanvasGroup = null;
+    }
+
+    private static void DestroyObject(GameObject obj)
+    {
+        if (obj == null)
+            return;
+
+        if (Application.isPlaying)
+            Destroy(obj);
+        else
+            DestroyImmediate(obj);
+    }
+
+    private static void StretchToParent(RectTransform rect, float padding = 0f)
+    {
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = new Vector2(padding, padding);
+        rect.offsetMax = new Vector2(-padding, -padding);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+    }
+
+    private static LayoutElement AddLayoutElement(GameObject obj, float minHeight, float preferredHeight, float preferredWidth = -1f)
+    {
+        LayoutElement layout = obj.AddComponent<LayoutElement>();
+        layout.minHeight = minHeight;
+        layout.preferredHeight = preferredHeight;
+        layout.flexibleWidth = 1f;
+
+        if (preferredWidth > 0f)
+            layout.preferredWidth = preferredWidth;
+
+        return layout;
+    }
+
+    private static Text CreateText(Transform parent, string name)
+    {
+        GameObject obj = new GameObject(name, typeof(RectTransform));
+        obj.transform.SetParent(parent, false);
+
+        Text text = obj.AddComponent<Text>();
+        text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        text.alignment = TextAnchor.MiddleCenter;
+        text.raycastTarget = false;
+        return text;
+    }
+
+    private static void ApplyTileStyle(Button button, Image image, Outline outline, Shadow shadow, Color normalColor, Color accentColor)
+    {
+        image.color = normalColor;
+        image.raycastTarget = true;
+
+        button.targetGraphic = image;
+        button.transition = Selectable.Transition.ColorTint;
+
+        ColorBlock colors = button.colors;
+        colors.normalColor = normalColor;
+        colors.highlightedColor = Color.Lerp(normalColor, accentColor, 0.28f);
+        colors.pressedColor = Color.Lerp(normalColor, Color.black, 0.22f);
+        colors.selectedColor = Color.Lerp(normalColor, accentColor, 0.4f);
+        colors.disabledColor = new Color(normalColor.r, normalColor.g, normalColor.b, 0.35f);
+        colors.colorMultiplier = 1f;
+        colors.fadeDuration = 0.08f;
+        button.colors = colors;
+
+        if (outline != null)
+        {
+            outline.effectColor = SymbolDoorUIDesign.BorderGold;
+            outline.effectDistance = new Vector2(2, 2);
+        }
+
+        if (shadow != null)
+        {
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.65f);
+            shadow.effectDistance = new Vector2(3, -3);
+        }
+    }
+
     private void CreateMainLayout(List<string> symbols, List<string> meanings, SymbolDoorController controller)
     {
-        // Main container
         GameObject mainContainer = new GameObject("MainContainer");
         mainContainer.transform.SetParent(canvas.transform, false);
         RectTransform mainRect = mainContainer.AddComponent<RectTransform>();
-        mainRect.anchorMin = Vector2.zero;
-        mainRect.anchorMax = Vector2.one;
-        mainRect.offsetMin = Vector2.zero;
-        mainRect.offsetMax = Vector2.zero;
+        StretchToParent(mainRect);
 
         Image mainBg = mainContainer.AddComponent<Image>();
         mainBg.color = SymbolDoorUIDesign.DarkBg;
 
-        // Title
         CreateTitle(mainContainer.transform);
 
-        // Content area (horizontal layout: symbols | door | meanings)
         GameObject contentArea = new GameObject("ContentArea");
         contentArea.transform.SetParent(mainContainer.transform, false);
         RectTransform contentRect = contentArea.AddComponent<RectTransform>();
-        contentRect.anchoredPosition = Vector2.zero;
-        contentRect.sizeDelta = new Vector2(-100, -300);
-        contentRect.offsetMin = new Vector2(50, 100);
-        contentRect.offsetMax = new Vector2(-50, -150);
+        contentRect.anchorMin = new Vector2(0f, 0.18f);
+        contentRect.anchorMax = new Vector2(1f, 0.84f);
+        contentRect.offsetMin = new Vector2(48, 0);
+        contentRect.offsetMax = new Vector2(-48, 0);
 
         HorizontalLayoutGroup hLayout = contentArea.AddComponent<HorizontalLayoutGroup>();
-        hLayout.spacing = 40;
-        hLayout.padding = new RectOffset(20, 20, 20, 20);
+        hLayout.spacing = 28;
+        hLayout.padding = new RectOffset(16, 16, 16, 16);
+        hLayout.childAlignment = TextAnchor.MiddleCenter;
+        hLayout.childControlWidth = true;
+        hLayout.childControlHeight = true;
         hLayout.childForceExpandWidth = true;
         hLayout.childForceExpandHeight = true;
 
-        // Symbols panel
         CreateSymbolPanel(contentArea.transform, symbols, controller);
-
-        // Door panel (center)
         CreateDoorPanel(contentArea.transform);
-
-        // Meanings panel
         CreateMeaningPanel(contentArea.transform, meanings, controller);
-
-        // Button area
         CreateButtonArea(mainContainer.transform, controller);
     }
 
@@ -137,20 +231,20 @@ public class SymbolDoorView : MonoBehaviour
         GameObject titleObj = new GameObject("Title");
         titleObj.transform.SetParent(parent, false);
         RectTransform titleRect = titleObj.AddComponent<RectTransform>();
-        titleRect.anchoredPosition = new Vector2(0, -40);
-        titleRect.sizeDelta = new Vector2(-100, 60);
-        titleRect.offsetMin = new Vector2(50, 0);
-        titleRect.offsetMax = new Vector2(-50, 0);
-        titleRect.anchorMin = new Vector2(0.5f, 1);
-        titleRect.anchorMax = new Vector2(0.5f, 1);
+        titleRect.anchorMin = new Vector2(0f, 1f);
+        titleRect.anchorMax = new Vector2(1f, 1f);
+        titleRect.pivot = new Vector2(0.5f, 1f);
+        titleRect.offsetMin = new Vector2(48, -96);
+        titleRect.offsetMax = new Vector2(-48, -24);
 
         Text titleText = titleObj.AddComponent<Text>();
         titleText.text = "SYMBOL DOOR";
-        titleText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         titleText.fontSize = 32;
         titleText.fontStyle = FontStyle.Bold;
         titleText.alignment = TextAnchor.MiddleCenter;
         titleText.color = SymbolDoorUIDesign.AccentGold;
+        titleText.raycastTarget = false;
     }
 
     private void CreateSymbolPanel(Transform parent, List<string> symbols, SymbolDoorController controller)
@@ -159,18 +253,25 @@ public class SymbolDoorView : MonoBehaviour
         panel.transform.SetParent(parent, false);
         RectTransform rect = panel.AddComponent<RectTransform>();
 
+        LayoutElement panelLayout = panel.AddComponent<LayoutElement>();
+        panelLayout.minWidth = 190;
+        panelLayout.preferredWidth = 250;
+        panelLayout.flexibleWidth = 1f;
+
         VerticalLayoutGroup vLayout = panel.AddComponent<VerticalLayoutGroup>();
-        vLayout.spacing = 15;
-        vLayout.padding = new RectOffset(15, 15, 15, 15);
-        vLayout.childForceExpandHeight = true;
+        vLayout.spacing = 18;
+        vLayout.padding = new RectOffset(10, 10, 10, 10);
+        vLayout.childAlignment = TextAnchor.MiddleCenter;
+        vLayout.childControlWidth = true;
+        vLayout.childControlHeight = true;
+        vLayout.childForceExpandWidth = true;
+        vLayout.childForceExpandHeight = false;
 
         symbolContainer = rect;
         symbolLayout = vLayout;
 
         foreach (string symbol in symbols)
-        {
             CreateSymbolButton(panel.transform, symbol, controller);
-        }
     }
 
     private void CreateSymbolButton(Transform parent, string symbol, SymbolDoorController controller)
@@ -179,24 +280,18 @@ public class SymbolDoorView : MonoBehaviour
         btnObj.transform.SetParent(parent, false);
 
         RectTransform rect = btnObj.AddComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(-20, 80);
+        rect.sizeDelta = new Vector2(0, 108);
+        AddLayoutElement(btnObj, 92, 108);
 
-        Button btn = btnObj.AddComponent<Button>();
         Image img = btnObj.AddComponent<Image>();
-        img.color = SymbolDoorUIDesign.DarkBg;
-
+        Button btn = btnObj.AddComponent<Button>();
         Shadow shadow = btnObj.AddComponent<Shadow>();
-        shadow.effectColor = Color.black;
-        shadow.effectDistance = new Vector2(3, -3);
-
         Outline outline = btnObj.AddComponent<Outline>();
-        outline.effectColor = SymbolDoorUIDesign.BorderGold;
-        outline.effectDistance = new Vector2(2, 2);
+        ApplyTileStyle(btn, img, outline, shadow, SymbolDoorUIDesign.DarkBg, SymbolDoorUIDesign.AccentGold);
 
-        Text txt = new GameObject("Text").AddComponent<Text>();
-        txt.transform.SetParent(btnObj.transform, false);
+        Text txt = CreateText(btnObj.transform, "Text");
+        StretchToParent(txt.rectTransform, TileTextPadding);
         txt.text = symbol;
-        txt.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
         txt.fontSize = 52;
         txt.alignment = TextAnchor.MiddleCenter;
         txt.color = SymbolDoorUIDesign.SymbolColor;
@@ -213,11 +308,14 @@ public class SymbolDoorView : MonoBehaviour
         panel.transform.SetParent(parent, false);
         RectTransform rect = panel.AddComponent<RectTransform>();
 
-        // Door background
+        LayoutElement layout = panel.AddComponent<LayoutElement>();
+        layout.minWidth = 210;
+        layout.preferredWidth = 250;
+        layout.flexibleWidth = 0.75f;
+
         Image doorBg = panel.AddComponent<Image>();
         doorBg.color = SymbolDoorUIDesign.DarkBg;
 
-        // Door outer glow (border)
         Outline outline = panel.AddComponent<Outline>();
         outline.effectColor = SymbolDoorUIDesign.AccentGold;
         outline.effectDistance = new Vector2(4, 4);
@@ -226,18 +324,57 @@ public class SymbolDoorView : MonoBehaviour
         shadow.effectColor = SymbolDoorUIDesign.AccentGold;
         shadow.effectDistance = new Vector2(8, 8);
 
-        // Door icon/text
-        Text doorText = new GameObject("DoorText").AddComponent<Text>();
-        doorText.transform.SetParent(panel.transform, false);
-        doorText.text = "🚪\nDOOR";
-        doorText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-        doorText.fontSize = 48;
+        Text doorText = CreateText(panel.transform, "DoorText");
+        RectTransform doorTextRect = doorText.rectTransform;
+        doorTextRect.anchorMin = new Vector2(0f, 0.36f);
+        doorTextRect.anchorMax = new Vector2(1f, 0.92f);
+        doorTextRect.offsetMin = new Vector2(12, 0);
+        doorTextRect.offsetMax = new Vector2(-12, 0);
+        doorText.text = "LOCK\nDOOR";
+        doorText.fontSize = 42;
         doorText.fontStyle = FontStyle.Bold;
         doorText.alignment = TextAnchor.MiddleCenter;
         doorText.color = SymbolDoorUIDesign.AccentGold;
 
+        CreateDoorSlots(panel.transform);
+
         doorImage = doorBg;
         doorCanvasGroup = panel.AddComponent<CanvasGroup>();
+    }
+
+    private void CreateDoorSlots(Transform parent)
+    {
+        GameObject row = new GameObject("SymbolSlots");
+        row.transform.SetParent(parent, false);
+
+        RectTransform rowRect = row.AddComponent<RectTransform>();
+        rowRect.anchorMin = new Vector2(0.5f, 0.18f);
+        rowRect.anchorMax = new Vector2(0.5f, 0.18f);
+        rowRect.pivot = new Vector2(0.5f, 0.5f);
+        rowRect.anchoredPosition = Vector2.zero;
+        rowRect.sizeDelta = new Vector2(190, 40);
+
+        HorizontalLayoutGroup slotsLayout = row.AddComponent<HorizontalLayoutGroup>();
+        slotsLayout.spacing = 12;
+        slotsLayout.childAlignment = TextAnchor.MiddleCenter;
+        slotsLayout.childControlWidth = true;
+        slotsLayout.childControlHeight = true;
+        slotsLayout.childForceExpandWidth = false;
+        slotsLayout.childForceExpandHeight = false;
+
+        for (int i = 0; i < 3; i++)
+        {
+            GameObject slot = new GameObject("Slot");
+            slot.transform.SetParent(row.transform, false);
+            AddLayoutElement(slot, 34, 34, 50);
+
+            Image image = slot.AddComponent<Image>();
+            image.color = Color.Lerp(SymbolDoorUIDesign.DarkBg, SymbolDoorUIDesign.AccentGold, 0.18f);
+
+            Outline slotOutline = slot.AddComponent<Outline>();
+            slotOutline.effectColor = SymbolDoorUIDesign.BorderGold;
+            slotOutline.effectDistance = new Vector2(1, 1);
+        }
     }
 
     private void CreateMeaningPanel(Transform parent, List<string> meanings, SymbolDoorController controller)
@@ -246,18 +383,25 @@ public class SymbolDoorView : MonoBehaviour
         panel.transform.SetParent(parent, false);
         RectTransform rect = panel.AddComponent<RectTransform>();
 
+        LayoutElement panelLayout = panel.AddComponent<LayoutElement>();
+        panelLayout.minWidth = 210;
+        panelLayout.preferredWidth = 280;
+        panelLayout.flexibleWidth = 1f;
+
         VerticalLayoutGroup vLayout = panel.AddComponent<VerticalLayoutGroup>();
-        vLayout.spacing = 15;
-        vLayout.padding = new RectOffset(15, 15, 15, 15);
-        vLayout.childForceExpandHeight = true;
+        vLayout.spacing = 18;
+        vLayout.padding = new RectOffset(10, 10, 10, 10);
+        vLayout.childAlignment = TextAnchor.MiddleCenter;
+        vLayout.childControlWidth = true;
+        vLayout.childControlHeight = true;
+        vLayout.childForceExpandWidth = true;
+        vLayout.childForceExpandHeight = false;
 
         meaningContainer = rect;
         meaningLayout = vLayout;
 
         foreach (string meaning in meanings)
-        {
             CreateMeaningButton(panel.transform, meaning, controller);
-        }
     }
 
     private void CreateMeaningButton(Transform parent, string meaning, SymbolDoorController controller)
@@ -266,24 +410,18 @@ public class SymbolDoorView : MonoBehaviour
         btnObj.transform.SetParent(parent, false);
 
         RectTransform rect = btnObj.AddComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(-20, 70);
+        rect.sizeDelta = new Vector2(0, 92);
+        AddLayoutElement(btnObj, 78, 92);
 
-        Button btn = btnObj.AddComponent<Button>();
         Image img = btnObj.AddComponent<Image>();
-        img.color = SymbolDoorUIDesign.DarkBg;
-
+        Button btn = btnObj.AddComponent<Button>();
         Shadow shadow = btnObj.AddComponent<Shadow>();
-        shadow.effectColor = Color.black;
-        shadow.effectDistance = new Vector2(2, -2);
-
         Outline outline = btnObj.AddComponent<Outline>();
-        outline.effectColor = SymbolDoorUIDesign.BorderGold;
-        outline.effectDistance = new Vector2(1, 1);
+        ApplyTileStyle(btn, img, outline, shadow, SymbolDoorUIDesign.DarkBg, SymbolDoorUIDesign.AccentCyan);
 
-        Text txt = new GameObject("Text").AddComponent<Text>();
-        txt.transform.SetParent(btnObj.transform, false);
+        Text txt = CreateText(btnObj.transform, "Text");
+        StretchToParent(txt.rectTransform, TileTextPadding);
         txt.text = meaning;
-        txt.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
         txt.fontSize = 28;
         txt.fontStyle = FontStyle.Bold;
         txt.alignment = TextAnchor.MiddleCenter;
@@ -304,20 +442,23 @@ public class SymbolDoorView : MonoBehaviour
         RectTransform buttonRect = buttonArea.AddComponent<RectTransform>();
         buttonRect.anchorMin = new Vector2(0.5f, 0);
         buttonRect.anchorMax = new Vector2(0.5f, 0);
-        buttonRect.anchoredPosition = new Vector2(0, 50);
-        buttonRect.sizeDelta = new Vector2(400, 70);
+        buttonRect.pivot = new Vector2(0.5f, 0f);
+        buttonRect.anchoredPosition = new Vector2(0, 34);
+        buttonRect.sizeDelta = new Vector2(460, 84);
 
         HorizontalLayoutGroup hLayout = buttonArea.AddComponent<HorizontalLayoutGroup>();
-        hLayout.spacing = 20;
-        hLayout.padding = new RectOffset(10, 10, 10, 10);
+        hLayout.spacing = 18;
+        hLayout.padding = new RectOffset(10, 10, 8, 8);
+        hLayout.childAlignment = TextAnchor.MiddleCenter;
+        hLayout.childControlWidth = true;
+        hLayout.childControlHeight = true;
         hLayout.childForceExpandWidth = true;
+        hLayout.childForceExpandHeight = true;
 
-        // Check button
-        CreateActionButton(buttonArea.transform, "ПРОВЕРИТЬ", SymbolDoorUIDesign.AccentGold,
+        CreateActionButton(buttonArea.transform, "CHECK", SymbolDoorUIDesign.AccentGold,
             () => controller.OnCheckClicked(), ref checkButton);
 
-        // Reset button
-        CreateActionButton(buttonArea.transform, "СБРОС", SymbolDoorUIDesign.AccentCyan,
+        CreateActionButton(buttonArea.transform, "RESET", SymbolDoorUIDesign.AccentCyan,
             () => controller.OnResetClicked(), ref resetButton);
     }
 
@@ -326,22 +467,21 @@ public class SymbolDoorView : MonoBehaviour
         GameObject btnObj = new GameObject(text);
         btnObj.transform.SetParent(parent, false);
 
-        Button btn = btnObj.AddComponent<Button>();
+        RectTransform rect = btnObj.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(0, 64);
+        AddLayoutElement(btnObj, 58, 64);
+
         Image img = btnObj.AddComponent<Image>();
-        img.color = color;
-
+        Button btn = btnObj.AddComponent<Button>();
         Shadow shadow = btnObj.AddComponent<Shadow>();
-        shadow.effectColor = Color.black;
-        shadow.effectDistance = new Vector2(2, -2);
-
         Outline outline = btnObj.AddComponent<Outline>();
+        ApplyTileStyle(btn, img, outline, shadow, color, Color.white);
         outline.effectColor = Color.black;
         outline.effectDistance = new Vector2(1, 1);
 
-        Text txtComponent = new GameObject("Text").AddComponent<Text>();
-        txtComponent.transform.SetParent(btnObj.transform, false);
+        Text txtComponent = CreateText(btnObj.transform, "Text");
+        StretchToParent(txtComponent.rectTransform, 8);
         txtComponent.text = text;
-        txtComponent.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
         txtComponent.fontSize = 24;
         txtComponent.fontStyle = FontStyle.Bold;
         txtComponent.alignment = TextAnchor.MiddleCenter;
@@ -353,12 +493,14 @@ public class SymbolDoorView : MonoBehaviour
 
     private void ApplyProfessionalStyling()
     {
-        // Fade in animation
         CanvasGroup canvasGroup = GetComponent<CanvasGroup>();
         if (canvasGroup == null)
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
 
-        StartCoroutine(FadeInUI(canvasGroup));
+        if (Application.isPlaying && isActiveAndEnabled)
+            StartCoroutine(FadeInUI(canvasGroup));
+        else
+            canvasGroup.alpha = 1f;
     }
 
     private IEnumerator FadeInUI(CanvasGroup cg)
@@ -435,7 +577,9 @@ public class SymbolDoorView : MonoBehaviour
 
     public void ShowIncomplete()
     {
-        if (checkButton == null) return;
+        if (checkButton == null)
+            return;
+
         Image checkImg = checkButton.GetComponent<Image>();
         if (checkImg != null)
             StartAnimationCoroutine(AnimateButtonError(checkImg));
@@ -443,8 +587,12 @@ public class SymbolDoorView : MonoBehaviour
 
     private void StartAnimationCoroutine(IEnumerator anim)
     {
+        if (!Application.isPlaying || !isActiveAndEnabled)
+            return;
+
         if (animationCoroutine != null)
             StopCoroutine(animationCoroutine);
+
         animationCoroutine = StartCoroutine(anim);
     }
 
