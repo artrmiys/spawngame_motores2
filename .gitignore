@@ -63,3 +63,5 @@ Library/
 Assembly-CSharp.csproj
 Assembly-CSharp-Editor.csproj
 Packages/manifest.json.bak
+*.md
+*.MD

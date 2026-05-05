@@ -21,7 +21,8 @@ public class EnemyAI : MonoBehaviour
     EnemyHealth _health;
     Transform   _player;
 
-    float _speed = 3f;
+    float _baseSpeed = 3f;
+    float _speedMultiplier = 1f;
     float _nextAttackTime;
     Vector2 _patrolTarget;
 
@@ -35,8 +36,7 @@ public class EnemyAI : MonoBehaviour
     void Start()
     {
         _player = GameObject.FindGameObjectWithTag("Player")?.transform;
-        if (RemoteConfigManager.Instance != null && RemoteConfigManager.Instance.IsReady)
-            _speed = RemoteConfigManager.Instance.EnemySpeed;
+        SyncBaseSpeed();
         SetNewPatrolTarget();
     }
 
@@ -44,9 +44,7 @@ public class EnemyAI : MonoBehaviour
     {
         if (_state == State.Dead) return;
 
-        // Sync speed from RemoteConfig
-        if (RemoteConfigManager.Instance != null && RemoteConfigManager.Instance.IsReady)
-            _speed = RemoteConfigManager.Instance.EnemySpeed;
+        SyncBaseSpeed();
 
         switch (_state)
         {
@@ -59,7 +57,7 @@ public class EnemyAI : MonoBehaviour
     // ── Patrol ──────────────────────────────────────────────────────────────
     void TickPatrol()
     {
-        MoveTowards(_patrolTarget, _speed * 0.6f);
+        MoveTowards(_patrolTarget, CurrentSpeed * 0.6f);
 
         if (Vector2.Distance(transform.position, _patrolTarget) < 0.3f)
             SetNewPatrolTarget();
@@ -79,7 +77,7 @@ public class EnemyAI : MonoBehaviour
     {
         if (_player == null) { _state = State.Patrol; return; }
 
-        MoveTowards(_player.position, _speed);
+        MoveTowards(_player.position, CurrentSpeed);
 
         if (PlayerInRange(attackRange))
             _state = State.Attack;
@@ -111,6 +109,19 @@ public class EnemyAI : MonoBehaviour
 
     bool PlayerInRange(float range) =>
         _player != null && Vector2.Distance(transform.position, _player.position) <= range;
+
+    float CurrentSpeed => _baseSpeed * _speedMultiplier;
+
+    void SyncBaseSpeed()
+    {
+        if (RemoteConfigManager.Instance != null && RemoteConfigManager.Instance.IsReady)
+            _baseSpeed = RemoteConfigManager.Instance.EnemySpeed;
+    }
+
+    public void SetSpeedMultiplier(float multiplier)
+    {
+        _speedMultiplier = Mathf.Max(0.1f, multiplier);
+    }
 
     void OnDied() => _state = State.Dead;
 

@@ -36,32 +36,45 @@ public static class Motores2SceneSetup
     {
         NewScene();
 
-        var bg = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        bg.name = "Background";
-        bg.transform.localScale = new Vector3(12, 22, 1);
-        SetColor(bg, new Color(0.05f, 0.05f, 0.1f));
+        Camera.main.backgroundColor = new Color(0.04f, 0.04f, 0.09f);
+        Camera.main.clearFlags = CameraClearFlags.SolidColor;
+        Camera.main.orthographic = true;
+        Camera.main.orthographicSize = 10.5f;
 
         var canvas = MakeCanvas("SplashCanvas");
         var safeArea = MakeSafeArea(canvas);
 
-        MakeText(safeArea, "TitleText", "SWARM SURVIVOR",
-            new Vector2(0, 110), new Vector2(760, 130), 64, FontStyle.Bold, Color.white);
+        // Gradient background
+        MakeGradientBackground(safeArea,
+            new Color(0.08f, 0.10f, 0.20f),
+            new Color(0.02f, 0.02f, 0.06f));
 
-        MakeText(safeArea, "TeamText",
+        // Logo
+        var title = MakeText(safeArea, "TitleText", "SWARM\nSURVIVOR",
+            new Vector2(0, 100), new Vector2(900, 280), 92, FontStyle.Bold, Color.white);
+        title.color = new Color(1f, 0.95f, 0.85f);
+        title.fontStyle = FontStyles.Bold | FontStyles.UpperCase;
+        title.outlineColor = new Color(0.95f, 0.78f, 0.25f, 1f);
+        title.outlineWidth = 0.25f;
+        title.characterSpacing = 8f;
+        AddFadeIn(title.gameObject, 0.1f);
+
+        // Decorative bar
+        MakeAccentBar(safeArea, new Vector2(0, -80), new Vector2(380, 3),
+            new Color(0.95f, 0.78f, 0.25f));
+
+        var team = MakeText(safeArea, "TeamText",
             "Menshchikov Artem\nShrom Nadezhda",
-            new Vector2(0, -50), new Vector2(620, 110), 28, FontStyle.Normal,
-            new Color(0.8f, 0.8f, 0.8f));
-
-        Camera.main.backgroundColor = new Color(0.05f, 0.05f, 0.1f);
-        Camera.main.clearFlags = CameraClearFlags.SolidColor;
-        Camera.main.orthographic = true;
-        Camera.main.orthographicSize = 10.5f;
+            new Vector2(0, -160), new Vector2(620, 110), 28, FontStyle.Normal,
+            new Color(0.8f, 0.85f, 0.95f));
+        team.characterSpacing = 4f;
+        AddFadeIn(team.gameObject, 0.5f);
 
         var manager = new GameObject("SplashManager");
         manager.AddComponent<SplashScreen>();
 
         SaveScene("SplashScreen");
-        Debug.Log("[Motores2] Splash scene created.");
+        Debug.Log("[Motores2] Splash scene created with polished UI.");
     }
 
     [MenuItem("Tools/Motores2 - Setup MainMenu Scene")]
@@ -69,7 +82,7 @@ public static class Motores2SceneSetup
     {
         NewScene();
 
-        Camera.main.backgroundColor = new Color(0.05f, 0.05f, 0.1f);
+        Camera.main.backgroundColor = new Color(0.04f, 0.04f, 0.09f);
         Camera.main.clearFlags = CameraClearFlags.SolidColor;
         Camera.main.orthographic = true;
         Camera.main.orthographicSize = 10.5f;
@@ -78,24 +91,56 @@ public static class Motores2SceneSetup
         var safeArea = MakeSafeArea(canvas);
         var menu = safeArea.AddComponent<MainMenuUI>();
 
-        MakeText(safeArea, "TitleText", "SWARM SURVIVOR",
-            new Vector2(0, 180), new Vector2(760, 130), 64, FontStyle.Bold, Color.white);
+        // Full-screen gradient background
+        MakeGradientBackground(safeArea,
+            new Color(0.08f, 0.10f, 0.20f),  // top: deep blue
+            new Color(0.02f, 0.02f, 0.06f)); // bottom: near black
 
-        MakeText(safeArea, "SubtitleText", "Portrait survival arena",
-            new Vector2(0, 70), new Vector2(620, 60), 26, FontStyle.Normal,
-            new Color(0.75f, 0.82f, 0.9f));
+        // Decorative top accent bar (gold)
+        MakeAccentBar(safeArea, new Vector2(0, 350), new Vector2(580, 4),
+            new Color(0.95f, 0.78f, 0.25f));
 
-        var playButton = MakeButton(safeArea, "PlayButton", "PLAY",
-            new Vector2(0, -70), new Vector2(260, 84)).GetComponent<Button>();
+        // Title with shadow + outline
+        var title = MakeText(safeArea, "TitleText", "SWARM\nSURVIVOR",
+            new Vector2(0, 220), new Vector2(900, 280), 92, FontStyle.Bold, Color.white);
+        title.color = new Color(1f, 0.95f, 0.85f);
+        title.fontStyle = FontStyles.Bold | FontStyles.UpperCase;
+        title.outlineColor = new Color(0.95f, 0.78f, 0.25f, 1f);
+        title.outlineWidth = 0.25f;
+        title.characterSpacing = 8f;
+        AddFadeIn(title.gameObject, 0.0f);
+
+        // Subtitle
+        var subtitle = MakeText(safeArea, "SubtitleText", "MOBILE  •  PORTRAIT  •  ARENA",
+            new Vector2(0, 30), new Vector2(620, 40), 22, FontStyle.Normal,
+            new Color(0.65f, 0.72f, 0.85f, 1f));
+        subtitle.characterSpacing = 12f;
+        AddFadeIn(subtitle.gameObject, 0.2f);
+
+        // Decorative bottom accent bar
+        MakeAccentBar(safeArea, new Vector2(0, -10), new Vector2(280, 2),
+            new Color(0.95f, 0.78f, 0.25f, 0.5f));
+
+        // Play button (large, centered)
+        var playGo = MakeStyledButton(safeArea, "PlayButton", "PLAY",
+            new Vector2(0, -130), new Vector2(380, 110),
+            new Color(0.95f, 0.78f, 0.25f),    // gold
+            new Color(0.78f, 0.6f, 0.12f),     // darker gold
+            Color.black, fontSize: 42, pulse: true);
+        var playButton = playGo.GetComponent<Button>();
         UnityEventTools.AddPersistentListener(playButton.onClick, menu.PlayGame);
+        AddFadeIn(playGo, 0.4f);
 
-        MakeText(safeArea, "AuthorsText",
+        // Authors footer
+        var authors = MakeText(safeArea, "AuthorsText",
             "Menshchikov Artem  |  Shrom Nadezhda",
-            new Vector2(0, -310), new Vector2(680, 44), 20, FontStyle.Normal,
-            new Color(0.6f, 0.6f, 0.6f));
+            new Vector2(0, -380), new Vector2(680, 44), 18, FontStyle.Normal,
+            new Color(0.5f, 0.5f, 0.6f));
+        authors.characterSpacing = 4f;
+        AddFadeIn(authors.gameObject, 0.6f);
 
         SaveScene("MainMenu");
-        Debug.Log("[Motores2] MainMenu scene created.");
+        Debug.Log("[Motores2] MainMenu scene created with polished UI.");
     }
 
     [MenuItem("Tools/Motores2 - Setup Level 1 Scene")]
@@ -174,6 +219,9 @@ public static class Motores2SceneSetup
         var enemyPrefab = CreateEnemyPrefab();
         var healPrefab = CreatePowerUpPrefab("HealPowerUpPrefab", PowerUpType.Heal, new Color(0.2f, 1f, 0.35f));
         var speedPrefab = CreatePowerUpPrefab("SpeedPowerUpPrefab", PowerUpType.SpeedBoost, new Color(0.25f, 0.8f, 1f));
+        var rapidFirePrefab = CreatePowerUpPrefab("RapidFirePowerUpPrefab", PowerUpType.RapidFire, new Color(1f, 0.85f, 0.2f));
+        var spreadShotPrefab = CreatePowerUpPrefab("SpreadShotPowerUpPrefab", PowerUpType.SpreadShot, new Color(0.95f, 0.35f, 1f));
+        var blastShotPrefab = CreatePowerUpPrefab("BlastShotPowerUpPrefab", PowerUpType.BlastShot, new Color(1f, 0.45f, 0.1f));
 
         var remoteConfig = new GameObject("RemoteConfigManager");
         remoteConfig.AddComponent<RemoteConfigManager>();
@@ -196,20 +244,61 @@ public static class Motores2SceneSetup
         var powerUpSpawner = powerUpSpawnerObject.AddComponent<PowerUpSpawner>();
         SetObject(powerUpSpawner, "healPrefab", healPrefab);
         SetObject(powerUpSpawner, "speedPrefab", speedPrefab);
+        SetObject(powerUpSpawner, "rapidFirePrefab", rapidFirePrefab);
+        SetObject(powerUpSpawner, "spreadShotPrefab", spreadShotPrefab);
+        SetObject(powerUpSpawner, "blastShotPrefab", blastShotPrefab);
+
+        // Add ScreenShake to camera
+        if (Camera.main.gameObject.GetComponent<ScreenShake>() == null)
+            Camera.main.gameObject.AddComponent<ScreenShake>();
 
         var canvas = MakeCanvas("GameCanvas");
         var safeArea = MakeSafeArea(canvas);
-        var hpBar = MakeHpBar(safeArea);
-        var waveText = MakeText(safeArea, "WaveText", "Wave 0 / " + waveCount,
-            new Vector2(0, -34), new Vector2(360, 54), 28, FontStyle.Bold, Color.white,
-            anchorMin: new Vector2(0.5f, 1), anchorMax: new Vector2(0.5f, 1), pivot: new Vector2(0.5f, 1));
-        var messageText = MakeText(safeArea, "MessageText", "",
-            Vector2.zero, new Vector2(560, 76), 36, FontStyle.Bold, Color.yellow);
 
-        var winPanel = MakePanel(safeArea, "WinScreen", new Color(0, 0.5f, 0, 0.85f), "YOU WIN!");
-        var losePanel = MakePanel(safeArea, "LoseScreen", new Color(0.5f, 0, 0, 0.85f), "GAME OVER");
-        var restartButton = MakeButton(losePanel, "RestartButton", "RESTART", new Vector2(0, -60), new Vector2(220, 60)).GetComponent<Button>();
-        var menuButton = MakeButton(winPanel, "MenuButton", "MAIN MENU", new Vector2(0, -60), new Vector2(240, 60)).GetComponent<Button>();
+        // Top bar with subtle dark background
+        MakeTopBar(safeArea);
+
+        var hpBar = MakeStyledHpBar(safeArea);
+        var waveText = MakeText(safeArea, "WaveText", "Wave 0 / " + waveCount,
+            new Vector2(0, -36), new Vector2(360, 54), 32, FontStyle.Bold, Color.white,
+            anchorMin: new Vector2(0.5f, 1), anchorMax: new Vector2(0.5f, 1), pivot: new Vector2(0.5f, 1));
+        waveText.outlineColor = Color.black;
+        waveText.outlineWidth = 0.2f;
+        waveText.characterSpacing = 2f;
+
+        var weaponText = MakeText(safeArea, "WeaponText", "Weapon: Basic",
+            new Vector2(-28, -32), new Vector2(320, 44), 22, FontStyle.Bold,
+            new Color(1f, 0.9f, 0.45f),
+            anchorMin: new Vector2(1, 1), anchorMax: new Vector2(1, 1), pivot: new Vector2(1, 1));
+        weaponText.alignment = TextAlignmentOptions.Right;
+        weaponText.outlineColor = Color.black;
+        weaponText.outlineWidth = 0.2f;
+
+        var messageText = MakeText(safeArea, "MessageText", "",
+            Vector2.zero, new Vector2(720, 100), 48, FontStyle.Bold,
+            new Color(1f, 0.9f, 0.4f));
+        messageText.outlineColor = Color.black;
+        messageText.outlineWidth = 0.3f;
+        messageText.fontStyle = FontStyles.Bold | FontStyles.UpperCase;
+        messageText.characterSpacing = 6f;
+
+        var winPanel = MakeStyledPanel(safeArea, "WinScreen",
+            new Color(0.1f, 0.4f, 0.15f, 0.95f),
+            new Color(0.05f, 0.2f, 0.08f, 0.95f),
+            "YOU WIN!", new Color(0.4f, 1f, 0.5f));
+        var losePanel = MakeStyledPanel(safeArea, "LoseScreen",
+            new Color(0.4f, 0.1f, 0.1f, 0.95f),
+            new Color(0.2f, 0.05f, 0.05f, 0.95f),
+            "GAME OVER", new Color(1f, 0.4f, 0.4f));
+
+        var restartButton = MakeStyledButton(losePanel, "RestartButton", "RESTART",
+            new Vector2(0, -80), new Vector2(280, 80),
+            new Color(0.95f, 0.78f, 0.25f), new Color(0.78f, 0.6f, 0.12f),
+            Color.black, fontSize: 32).GetComponent<Button>();
+        var menuButton = MakeStyledButton(winPanel, "MenuButton", "MAIN MENU",
+            new Vector2(0, -80), new Vector2(280, 80),
+            new Color(0.95f, 0.78f, 0.25f), new Color(0.78f, 0.6f, 0.12f),
+            Color.black, fontSize: 30).GetComponent<Button>();
         UnityEventTools.AddPersistentListener(restartButton.onClick, gameManager.RestartGame);
         UnityEventTools.AddPersistentListener(menuButton.onClick, gameManager.GoToMenu);
         winPanel.SetActive(false);
@@ -218,6 +307,7 @@ public static class Motores2SceneSetup
         var uiManager = safeArea.AddComponent<UIManager>();
         SetObject(uiManager, "hpBar", hpBar);
         SetObject(uiManager, "waveText", waveText);
+        SetObject(uiManager, "weaponText", weaponText);
         SetObject(uiManager, "messageText", messageText);
         SetObject(uiManager, "winScreen", winPanel);
         SetObject(uiManager, "loseScreen", losePanel);
@@ -246,6 +336,7 @@ public static class Motores2SceneSetup
         playerRb.freezeRotation = true;
 
         player.AddComponent<PlayerHealth>();
+        player.AddComponent<HitFlash>();
         playerController = player.AddComponent<PlayerController>();
         var autoAttack = player.AddComponent<AutoAttack>();
 
@@ -289,6 +380,7 @@ public static class Motores2SceneSetup
         rb.freezeRotation = true;
         go.AddComponent<EnemyHealth>();
         go.AddComponent<EnemyAI>();
+        go.AddComponent<HitFlash>();
         return SaveAsGeneratedPrefab(go, "EnemyPrefab");
     }
 
@@ -418,7 +510,9 @@ public static class Motores2SceneSetup
         var scaler = go.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1080, 1920);
+        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
         scaler.matchWidthOrHeight = 0.5f;
+        scaler.referencePixelsPerUnit = 100f;
         go.AddComponent<GraphicRaycaster>();
 
         var eventSystem = new GameObject("EventSystem");
@@ -621,5 +715,243 @@ public static class Motores2SceneSetup
         tags.InsertArrayElementAtIndex(tags.arraySize);
         tags.GetArrayElementAtIndex(tags.arraySize - 1).stringValue = tag;
         tagManager.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    // ============================================================
+    // VISUAL POLISH HELPERS - added in design refactor
+    // ============================================================
+
+    static GameObject MakeGradientBackground(GameObject parent, Color top, Color bottom)
+    {
+        var go = new GameObject("GradientBG");
+        go.transform.SetParent(parent.transform, false);
+        var rect = go.AddComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        var img = go.AddComponent<Image>();
+        img.color = Color.white;
+        var grad = go.AddComponent<UIGradient>();
+        var gradSO = new SerializedObject(grad);
+        gradSO.FindProperty("topColor").colorValue = top;
+        gradSO.FindProperty("bottomColor").colorValue = bottom;
+        gradSO.ApplyModifiedPropertiesWithoutUndo();
+        go.transform.SetAsFirstSibling();
+        return go;
+    }
+
+    static GameObject MakeAccentBar(GameObject parent, Vector2 pos, Vector2 size, Color color)
+    {
+        var go = new GameObject("AccentBar");
+        go.transform.SetParent(parent.transform, false);
+        var rect = go.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = pos;
+        rect.sizeDelta = size;
+        var img = go.AddComponent<Image>();
+        img.color = color;
+        return go;
+    }
+
+    static GameObject MakeStyledButton(GameObject parent, string name, string label,
+        Vector2 pos, Vector2 size, Color colorTop, Color colorBottom, Color textColor,
+        float fontSize = 28, bool pulse = false)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent.transform, false);
+        var rect = go.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = pos;
+        rect.sizeDelta = size;
+
+        var image = go.AddComponent<Image>();
+        image.color = Color.white;
+
+        // Gradient
+        var grad = go.AddComponent<UIGradient>();
+        var gradSO = new SerializedObject(grad);
+        gradSO.FindProperty("topColor").colorValue = colorTop;
+        gradSO.FindProperty("bottomColor").colorValue = colorBottom;
+        gradSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // Shadow
+        var shadow = go.AddComponent<Shadow>();
+        shadow.effectColor = new Color(0, 0, 0, 0.6f);
+        shadow.effectDistance = new Vector2(4, -4);
+
+        var button = go.AddComponent<Button>();
+        button.targetGraphic = image;
+
+        // Animated button behavior
+        var anim = go.AddComponent<UIAnimatedButton>();
+        if (pulse)
+        {
+            var animSO = new SerializedObject(anim);
+            animSO.FindProperty("pulseWhenIdle").boolValue = true;
+            animSO.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // Label
+        var labelObject = new GameObject("Label");
+        labelObject.transform.SetParent(go.transform, false);
+        var labelRect = labelObject.AddComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.sizeDelta = Vector2.zero;
+        var text = labelObject.AddComponent<TextMeshProUGUI>();
+        text.text = label;
+        text.fontSize = fontSize;
+        text.color = textColor;
+        text.alignment = TextAlignmentOptions.Center;
+        text.fontStyle = FontStyles.Bold | FontStyles.UpperCase;
+        text.characterSpacing = 4f;
+
+        return go;
+    }
+
+    static void AddFadeIn(GameObject target, float delay)
+    {
+        var canvasGroup = target.GetComponent<CanvasGroup>();
+        if (canvasGroup == null) canvasGroup = target.AddComponent<CanvasGroup>();
+        var fade = target.AddComponent<UIFadeIn>();
+        var so = new SerializedObject(fade);
+        so.FindProperty("delay").floatValue = delay;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    static GameObject MakeTopBar(GameObject parent)
+    {
+        var go = new GameObject("TopBar");
+        go.transform.SetParent(parent.transform, false);
+        var rect = go.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0, 1);
+        rect.anchorMax = new Vector2(1, 1);
+        rect.pivot = new Vector2(0.5f, 1);
+        rect.anchoredPosition = new Vector2(0, 0);
+        rect.sizeDelta = new Vector2(0, 100);
+        var img = go.AddComponent<Image>();
+        img.color = Color.white;
+        var grad = go.AddComponent<UIGradient>();
+        var gradSO = new SerializedObject(grad);
+        gradSO.FindProperty("topColor").colorValue = new Color(0, 0, 0, 0.6f);
+        gradSO.FindProperty("bottomColor").colorValue = new Color(0, 0, 0, 0f);
+        gradSO.ApplyModifiedPropertiesWithoutUndo();
+        return go;
+    }
+
+    static Slider MakeStyledHpBar(GameObject parent)
+    {
+        var root = new GameObject("HPBar");
+        root.transform.SetParent(parent.transform, false);
+        var rect = root.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0, 1);
+        rect.anchorMax = new Vector2(0, 1);
+        rect.pivot = new Vector2(0, 1);
+        rect.anchoredPosition = new Vector2(28, -32);
+        rect.sizeDelta = new Vector2(280, 36);
+
+        // Outer dark frame
+        var bg = root.AddComponent<Image>();
+        bg.color = new Color(0.05f, 0.05f, 0.08f, 0.85f);
+
+        var outline = root.AddComponent<Outline>();
+        outline.effectColor = new Color(0.95f, 0.78f, 0.25f, 0.8f);
+        outline.effectDistance = new Vector2(2, 2);
+
+        var fillArea = new GameObject("Fill Area");
+        fillArea.transform.SetParent(root.transform, false);
+        var fillAreaRect = fillArea.AddComponent<RectTransform>();
+        fillAreaRect.anchorMin = Vector2.zero;
+        fillAreaRect.anchorMax = Vector2.one;
+        fillAreaRect.offsetMin = new Vector2(4, 4);
+        fillAreaRect.offsetMax = new Vector2(-4, -4);
+
+        var fill = new GameObject("Fill");
+        fill.transform.SetParent(fillArea.transform, false);
+        var fillRect = fill.AddComponent<RectTransform>();
+        fillRect.anchorMin = Vector2.zero;
+        fillRect.anchorMax = Vector2.one;
+        fillRect.offsetMin = Vector2.zero;
+        fillRect.offsetMax = Vector2.zero;
+        var fillImage = fill.AddComponent<Image>();
+        fillImage.color = Color.white;
+
+        // HP gradient (green→light green)
+        var hpGrad = fill.AddComponent<UIGradient>();
+        var hpGradSO = new SerializedObject(hpGrad);
+        hpGradSO.FindProperty("topColor").colorValue = new Color(0.4f, 1f, 0.5f);
+        hpGradSO.FindProperty("bottomColor").colorValue = new Color(0.15f, 0.7f, 0.3f);
+        hpGradSO.ApplyModifiedPropertiesWithoutUndo();
+
+        // HP label
+        var hpLabel = new GameObject("HPLabel");
+        hpLabel.transform.SetParent(root.transform, false);
+        var hpLabelRect = hpLabel.AddComponent<RectTransform>();
+        hpLabelRect.anchorMin = Vector2.zero;
+        hpLabelRect.anchorMax = Vector2.one;
+        hpLabelRect.offsetMin = Vector2.zero;
+        hpLabelRect.offsetMax = Vector2.zero;
+        var hpText = hpLabel.AddComponent<TextMeshProUGUI>();
+        hpText.text = "HP";
+        hpText.fontSize = 18;
+        hpText.color = Color.white;
+        hpText.alignment = TextAlignmentOptions.Center;
+        hpText.fontStyle = FontStyles.Bold;
+        hpText.outlineColor = Color.black;
+        hpText.outlineWidth = 0.2f;
+
+        var slider = root.AddComponent<Slider>();
+        slider.transition = Selectable.Transition.None;
+        slider.minValue = 0;
+        slider.maxValue = 5;
+        slider.value = 5;
+        slider.fillRect = fillRect;
+        slider.targetGraphic = fillImage;
+        return slider;
+    }
+
+    static GameObject MakeStyledPanel(GameObject parent, string name, Color topColor, Color bottomColor,
+        string title, Color titleColor)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent.transform, false);
+        var rect = go.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(560, 420);
+
+        var image = go.AddComponent<Image>();
+        image.color = Color.white;
+
+        var grad = go.AddComponent<UIGradient>();
+        var gradSO = new SerializedObject(grad);
+        gradSO.FindProperty("topColor").colorValue = topColor;
+        gradSO.FindProperty("bottomColor").colorValue = bottomColor;
+        gradSO.ApplyModifiedPropertiesWithoutUndo();
+
+        var outline = go.AddComponent<Outline>();
+        outline.effectColor = new Color(0.95f, 0.78f, 0.25f, 0.8f);
+        outline.effectDistance = new Vector2(3, 3);
+
+        var shadow = go.AddComponent<Shadow>();
+        shadow.effectColor = new Color(0, 0, 0, 0.7f);
+        shadow.effectDistance = new Vector2(0, -8);
+
+        // Title
+        var titleText = MakeText(go, "Label", title,
+            new Vector2(0, 90), new Vector2(490, 110),
+            64, FontStyle.Bold, titleColor);
+        titleText.fontStyle = FontStyles.Bold | FontStyles.UpperCase;
+        titleText.outlineColor = Color.black;
+        titleText.outlineWidth = 0.3f;
+        titleText.characterSpacing = 6f;
+
+        return go;
     }
 }

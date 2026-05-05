@@ -8,10 +8,20 @@ public class WaveManager : MonoBehaviour
 
     [SerializeField] GameObject enemyPrefab;
     [SerializeField] float      spawnRadius  = 9f;
+    [SerializeField] Vector2    playAreaHalfExtents = new Vector2(5.1f, 11.1f);
+    [SerializeField] float      spawnEdgeInset = 0.35f;
+    [SerializeField] float      minPlayerSpawnDistance = 4f;
     [SerializeField] int        baseEnemies  = 5;
     [SerializeField] int        levelWaveCount = 5;
     [SerializeField] string     levelTitle = "Level";
     [SerializeField] bool       showSymbolDoor = true;
+
+    [Header("Enemy variants")]
+    [SerializeField] int        fastEnemyEvery = 4;
+    [SerializeField] float      fastEnemySpeedMultiplier = 1.75f;
+    [SerializeField] int        fastEnemyMaxHp = 1;
+    [SerializeField] float      fastEnemyScaleMultiplier = 1.2f;
+    [SerializeField] Color      fastEnemyColor = new Color(1f, 0.75f, 0.15f);
 
     int   _totalWaves;
     int   _currentWave;
@@ -20,6 +30,8 @@ public class WaveManager : MonoBehaviour
     float _spawnInterval;
     bool  _waveActive;
     bool  _doorPassed = false;
+    int   _spawnSequence;
+    Transform _player;
 
     void Awake()
     {
@@ -35,6 +47,7 @@ public class WaveManager : MonoBehaviour
 
         _totalWaves    = levelWaveCount;
         _spawnInterval = RemoteConfigManager.Instance?.SpawnInterval ?? 2f;
+        _player = GameObject.FindGameObjectWithTag("Player")?.transform;
 
         UIManager.Instance?.SetWave(0, _totalWaves);
         UIManager.Instance?.ShowMessage(levelTitle, 1.5f);
@@ -72,9 +85,59 @@ public class WaveManager : MonoBehaviour
         if (enemyPrefab == null)
             return;
 
-        Vector2 dir = Random.insideUnitCircle.normalized;
-        Vector3 pos = dir * spawnRadius;
-        Instantiate(enemyPrefab, pos, Quaternion.identity);
+        Vector3 pos = GetSpawnPosition();
+        GameObject enemy = Instantiate(enemyPrefab, pos, Quaternion.identity);
+        _spawnSequence++;
+
+        if (fastEnemyEvery > 0 && _spawnSequence % fastEnemyEvery == 0)
+            ConfigureFastEnemy(enemy);
+    }
+
+    Vector3 GetSpawnPosition()
+    {
+        if (playAreaHalfExtents.x <= 0f || playAreaHalfExtents.y <= 0f)
+            return Random.insideUnitCircle.normalized * spawnRadius;
+
+        Vector3 candidate = Vector3.zero;
+        for (int i = 0; i < 12; i++)
+        {
+            candidate = GetEdgeSpawnPosition();
+            if (_player == null || Vector2.Distance(candidate, _player.position) >= minPlayerSpawnDistance)
+                return candidate;
+        }
+
+        return candidate;
+    }
+
+    Vector3 GetEdgeSpawnPosition()
+    {
+        float xLimit = Mathf.Max(0.5f, playAreaHalfExtents.x - spawnEdgeInset);
+        float yLimit = Mathf.Max(0.5f, playAreaHalfExtents.y - spawnEdgeInset);
+
+        switch (Random.Range(0, 4))
+        {
+            case 0: return new Vector3(Random.Range(-xLimit, xLimit), yLimit, 0f);
+            case 1: return new Vector3(Random.Range(-xLimit, xLimit), -yLimit, 0f);
+            case 2: return new Vector3(-xLimit, Random.Range(-yLimit, yLimit), 0f);
+            default: return new Vector3(xLimit, Random.Range(-yLimit, yLimit), 0f);
+        }
+    }
+
+    void ConfigureFastEnemy(GameObject enemy)
+    {
+        if (enemy == null)
+            return;
+
+        enemy.name = "FastFragileEnemy";
+        enemy.transform.localScale *= fastEnemyScaleMultiplier;
+        enemy.GetComponent<EnemyAI>()?.SetSpeedMultiplier(fastEnemySpeedMultiplier);
+        enemy.GetComponent<EnemyHealth>()?.SetMaxHealth(fastEnemyMaxHp);
+
+        var renderer = enemy.GetComponent<Renderer>();
+        if (renderer != null)
+            renderer.material.color = fastEnemyColor;
+
+        ParticleBurst.Burst(enemy.transform.position, fastEnemyColor, 6, 1.1f, 0.35f);
     }
 
     public void OnEnemyKilled()
