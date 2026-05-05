@@ -18,9 +18,9 @@ public class SymbolDoorEditModeTests
 
         Assert.AreEqual(3, data.Symbols.Count);
         Assert.AreEqual(3, data.Meanings.Count);
-        Assert.AreEqual("Day", data.CorrectPairs["\u2600"]);
-        Assert.AreEqual("Night", data.CorrectPairs["\u263E"]);
-        Assert.AreEqual("Go", data.CorrectPairs["\u2192"]);
+        Assert.AreEqual("POWER", data.CorrectPairs["PWR"]);
+        Assert.AreEqual("TARGET", data.CorrectPairs["TGT"]);
+        Assert.AreEqual("SHIELD", data.CorrectPairs["SHD"]);
     }
 
     [Test]
@@ -114,6 +114,14 @@ public class SymbolDoorEditModeTests
                 Assert.IsFalse(label.raycastTarget, button.name);
                 AssertRectStretchesToParent(label.rectTransform, button.name);
             }
+
+            Assert.IsTrue(HasText(viewObject, "COMBAT CORE REPAIR"));
+            Assert.IsTrue(HasText(viewObject, "CORE\nOFFLINE"));
+            Assert.IsTrue(HasText(viewObject, "SYSTEM FAULT"));
+            Assert.IsTrue(HasText(viewObject, "REPAIR"));
+            Assert.IsTrue(HasText(viewObject, "CLEAR"));
+            Assert.IsFalse(HasText(viewObject, "SYMBOL DOOR"));
+            Assert.IsFalse(HasText(viewObject, "LOCK\nDOOR"));
         }
         finally
         {
@@ -200,6 +208,17 @@ public class SymbolDoorEditModeTests
         Assert.IsNotNull(rect, name);
         Assert.AreEqual(Vector2.zero, rect.anchorMin, name);
         Assert.AreEqual(Vector2.one, rect.anchorMax, name);
+    }
+
+    private static bool HasText(GameObject root, string expected)
+    {
+        foreach (Text text in root.GetComponentsInChildren<Text>(true))
+        {
+            if (text != null && text.text == expected)
+                return true;
+        }
+
+        return false;
     }
 }
 

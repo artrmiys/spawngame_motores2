@@ -201,6 +201,7 @@ public class WaveManager : MonoBehaviour
     IEnumerator ShowSymbolDoorSafely()
     {
         Time.timeScale = 0f;
+        UIManager.Instance?.ShowMessage("Combat core broken!", 1f);
 
         SymbolDoor door = GetOrCreateSymbolDoor();
         var puzzle = SymbolDoorPuzzleBuilder.CreateDefault().Build();
@@ -210,7 +211,7 @@ public class WaveManager : MonoBehaviour
 
         Time.timeScale = 1f;
         _doorPassed = true;
-        UIManager.Instance?.ShowMessage("Door passed!", 1f);
+        UIManager.Instance?.ShowMessage("Combat core repaired!", 1f);
     }
 
     SymbolDoor GetOrCreateSymbolDoor()
@@ -225,6 +226,6 @@ public class WaveManager : MonoBehaviour
         if (FindObjectOfType<SymbolDoorEventManager>(true) == null)
             new GameObject("SymbolDoorEventManager").AddComponent<SymbolDoorEventManager>();
 
-        return new GameObject("SymbolDoor").AddComponent<SymbolDoor>();
+        return new GameObject("CombatRepairModule").AddComponent<SymbolDoor>();
     }
 }

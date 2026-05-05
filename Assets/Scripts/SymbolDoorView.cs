@@ -10,6 +10,9 @@ using UnityEngine.UI;
 public class SymbolDoorView : MonoBehaviour
 {
     private const float TileTextPadding = 10f;
+    private const string TitleText = "COMBAT CORE REPAIR";
+    private const string CoreText = "CORE\nOFFLINE";
+    private const string FaultText = "SYSTEM FAULT";
 
     [SerializeField] private Canvas canvas;
     [SerializeField] private Image doorImage;
@@ -238,7 +241,7 @@ public class SymbolDoorView : MonoBehaviour
         titleRect.offsetMax = new Vector2(-48, -24);
 
         Text titleText = titleObj.AddComponent<Text>();
-        titleText.text = "SYMBOL DOOR";
+        titleText.text = TitleText;
         titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         titleText.fontSize = 32;
         titleText.fontStyle = FontStyle.Bold;
@@ -304,7 +307,7 @@ public class SymbolDoorView : MonoBehaviour
 
     private void CreateDoorPanel(Transform parent)
     {
-        GameObject panel = new GameObject("DoorPanel");
+        GameObject panel = new GameObject("RepairCorePanel");
         panel.transform.SetParent(parent, false);
         RectTransform rect = panel.AddComponent<RectTransform>();
 
@@ -314,37 +317,90 @@ public class SymbolDoorView : MonoBehaviour
         layout.flexibleWidth = 0.75f;
 
         Image doorBg = panel.AddComponent<Image>();
-        doorBg.color = SymbolDoorUIDesign.DarkBg;
+        doorBg.color = SymbolDoorUIDesign.PanelBg;
 
         Outline outline = panel.AddComponent<Outline>();
         outline.effectColor = SymbolDoorUIDesign.AccentGold;
         outline.effectDistance = new Vector2(4, 4);
 
         Shadow shadow = panel.AddComponent<Shadow>();
-        shadow.effectColor = SymbolDoorUIDesign.AccentGold;
-        shadow.effectDistance = new Vector2(8, 8);
+        shadow.effectColor = SymbolDoorUIDesign.WarningGlow;
+        shadow.effectDistance = new Vector2(7, -7);
+
+        CreateCoreCircuitLines(panel.transform);
+        CreateFaultBadge(panel.transform);
 
         Text doorText = CreateText(panel.transform, "DoorText");
         RectTransform doorTextRect = doorText.rectTransform;
-        doorTextRect.anchorMin = new Vector2(0f, 0.36f);
-        doorTextRect.anchorMax = new Vector2(1f, 0.92f);
+        doorTextRect.anchorMin = new Vector2(0f, 0.32f);
+        doorTextRect.anchorMax = new Vector2(1f, 0.76f);
         doorTextRect.offsetMin = new Vector2(12, 0);
         doorTextRect.offsetMax = new Vector2(-12, 0);
-        doorText.text = "LOCK\nDOOR";
-        doorText.fontSize = 42;
+        doorText.text = CoreText;
+        doorText.fontSize = 40;
         doorText.fontStyle = FontStyle.Bold;
         doorText.alignment = TextAnchor.MiddleCenter;
-        doorText.color = SymbolDoorUIDesign.AccentGold;
+        doorText.color = SymbolDoorUIDesign.ErrorRed;
 
-        CreateDoorSlots(panel.transform);
+        CreateRepairSlots(panel.transform);
 
         doorImage = doorBg;
         doorCanvasGroup = panel.AddComponent<CanvasGroup>();
     }
 
-    private void CreateDoorSlots(Transform parent)
+    private void CreateCoreCircuitLines(Transform parent)
     {
-        GameObject row = new GameObject("SymbolSlots");
+        CreateCircuitLine(parent, "CircuitTop", new Vector2(0.5f, 0.82f), new Vector2(142f, 4f), SymbolDoorUIDesign.AccentCyan);
+        CreateCircuitLine(parent, "CircuitMidLeft", new Vector2(0.22f, 0.54f), new Vector2(58f, 4f), SymbolDoorUIDesign.ErrorRed);
+        CreateCircuitLine(parent, "CircuitMidRight", new Vector2(0.78f, 0.54f), new Vector2(58f, 4f), SymbolDoorUIDesign.ErrorRed);
+        CreateCircuitLine(parent, "CircuitBottom", new Vector2(0.5f, 0.29f), new Vector2(126f, 4f), SymbolDoorUIDesign.AccentCyan);
+    }
+
+    private void CreateCircuitLine(Transform parent, string name, Vector2 anchor, Vector2 size, Color color)
+    {
+        GameObject line = new GameObject(name);
+        line.transform.SetParent(parent, false);
+        RectTransform rect = line.AddComponent<RectTransform>();
+        rect.anchorMin = anchor;
+        rect.anchorMax = anchor;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = size;
+
+        Image image = line.AddComponent<Image>();
+        image.color = new Color(color.r, color.g, color.b, 0.55f);
+    }
+
+    private void CreateFaultBadge(Transform parent)
+    {
+        GameObject badge = new GameObject("FaultBadge");
+        badge.transform.SetParent(parent, false);
+
+        RectTransform badgeRect = badge.AddComponent<RectTransform>();
+        badgeRect.anchorMin = new Vector2(0.5f, 0.88f);
+        badgeRect.anchorMax = new Vector2(0.5f, 0.88f);
+        badgeRect.pivot = new Vector2(0.5f, 0.5f);
+        badgeRect.anchoredPosition = Vector2.zero;
+        badgeRect.sizeDelta = new Vector2(168, 36);
+
+        Image badgeImage = badge.AddComponent<Image>();
+        badgeImage.color = SymbolDoorUIDesign.WarningGlow;
+
+        Outline outline = badge.AddComponent<Outline>();
+        outline.effectColor = Color.black;
+        outline.effectDistance = new Vector2(1, 1);
+
+        Text text = CreateText(badge.transform, "Text");
+        StretchToParent(text.rectTransform, 6);
+        text.text = FaultText;
+        text.fontSize = 17;
+        text.fontStyle = FontStyle.Bold;
+        text.color = Color.black;
+    }
+
+    private void CreateRepairSlots(Transform parent)
+    {
+        GameObject row = new GameObject("RepairSlots");
         row.transform.SetParent(parent, false);
 
         RectTransform rowRect = row.AddComponent<RectTransform>();
@@ -364,15 +420,15 @@ public class SymbolDoorView : MonoBehaviour
 
         for (int i = 0; i < 3; i++)
         {
-            GameObject slot = new GameObject("Slot");
+            GameObject slot = new GameObject("RepairSlot");
             slot.transform.SetParent(row.transform, false);
             AddLayoutElement(slot, 34, 34, 50);
 
             Image image = slot.AddComponent<Image>();
-            image.color = Color.Lerp(SymbolDoorUIDesign.DarkBg, SymbolDoorUIDesign.AccentGold, 0.18f);
+            image.color = Color.Lerp(SymbolDoorUIDesign.PanelBg, SymbolDoorUIDesign.AccentCyan, 0.2f);
 
             Outline slotOutline = slot.AddComponent<Outline>();
-            slotOutline.effectColor = SymbolDoorUIDesign.BorderGold;
+            slotOutline.effectColor = SymbolDoorUIDesign.AccentCyan;
             slotOutline.effectDistance = new Vector2(1, 1);
         }
     }
@@ -455,10 +511,10 @@ public class SymbolDoorView : MonoBehaviour
         hLayout.childForceExpandWidth = true;
         hLayout.childForceExpandHeight = true;
 
-        CreateActionButton(buttonArea.transform, "CHECK", SymbolDoorUIDesign.AccentGold,
+        CreateActionButton(buttonArea.transform, "REPAIR", SymbolDoorUIDesign.AccentGold,
             () => controller.OnCheckClicked(), ref checkButton);
 
-        CreateActionButton(buttonArea.transform, "RESET", SymbolDoorUIDesign.AccentCyan,
+        CreateActionButton(buttonArea.transform, "CLEAR", SymbolDoorUIDesign.AccentCyan,
             () => controller.OnResetClicked(), ref resetButton);
     }
 

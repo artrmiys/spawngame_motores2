@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Symbol Door puzzle manager. Orchestrates model, view, and controller.
+/// Symbol matching repair puzzle manager. Orchestrates model, view, and controller.
 /// Handles puzzle display, state management, and cleanup.
 /// </summary>
 public class SymbolDoor : MonoBehaviour
@@ -220,9 +220,9 @@ public class SymbolDoorPuzzleBuilder
     public static SymbolDoorPuzzleBuilder CreateDefault()
     {
         return new SymbolDoorPuzzleBuilder()
-            .AddPair("\u2600", "Day")
-            .AddPair("\u263E", "Night")
-            .AddPair("\u2192", "Go");
+            .AddPair("PWR", "POWER")
+            .AddPair("TGT", "TARGET")
+            .AddPair("SHD", "SHIELD");
     }
 
     public SymbolDoorPuzzleBuilder AddPair(string symbol, string meaning)

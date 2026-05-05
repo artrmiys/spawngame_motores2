@@ -7,14 +7,15 @@ using UnityEngine.UI;
 /// </summary>
 public class SymbolDoorUIDesign
 {
-    // Color Palette - Mystical theme
-    public static readonly Color DarkBg = new Color(0.08f, 0.08f, 0.15f, 1f);      // Deep purple-black
-    public static readonly Color AccentGold = new Color(0.92f, 0.78f, 0.2f, 1f);    // Warm gold
-    public static readonly Color AccentCyan = new Color(0.2f, 0.8f, 0.95f, 1f);     // Mystical cyan
-    public static readonly Color ErrorRed = new Color(0.95f, 0.3f, 0.3f, 1f);       // Bright error
-    public static readonly Color SuccessGreen = new Color(0.3f, 0.9f, 0.4f, 1f);    // Emerald
-    public static readonly Color SymbolColor = new Color(0.95f, 0.95f, 0.95f, 1f);  // Light gray
-    public static readonly Color BorderGold = new Color(0.85f, 0.7f, 0.15f, 1f);    // Darker gold
+    public static readonly Color DarkBg = new Color(0.025f, 0.035f, 0.045f, 1f);
+    public static readonly Color PanelBg = new Color(0.04f, 0.07f, 0.08f, 1f);
+    public static readonly Color AccentGold = new Color(1f, 0.62f, 0.18f, 1f);
+    public static readonly Color AccentCyan = new Color(0.16f, 0.86f, 1f, 1f);
+    public static readonly Color ErrorRed = new Color(1f, 0.22f, 0.16f, 1f);
+    public static readonly Color SuccessGreen = new Color(0.25f, 1f, 0.48f, 1f);
+    public static readonly Color SymbolColor = new Color(0.92f, 0.98f, 1f, 1f);
+    public static readonly Color BorderGold = new Color(0.95f, 0.46f, 0.14f, 1f);
+    public static readonly Color WarningGlow = new Color(1f, 0.18f, 0.08f, 0.72f);
 
     // Animation parameters
     public const float HoverAnimDuration = 0.15f;
