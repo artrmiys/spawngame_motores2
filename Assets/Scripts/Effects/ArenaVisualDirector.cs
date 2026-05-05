@@ -91,38 +91,39 @@ public class ArenaVisualDirector : MonoBehaviour
     void Update()
     {
         float time = Time.unscaledTime;
-        float pulse = 0.5f + Mathf.Sin(time * 1.4f) * 0.5f;
+        float pulse = SoftVisualSprite.Smooth01(0.5f + Mathf.Sin(time * 1.4f) * 0.5f);
 
         if (backdropRenderer != null)
-            backdropRenderer.material.color = Color.Lerp(baseColor, Color.Lerp(baseColor, accentColor, 0.18f), pulse * 0.45f);
+            SoftVisualSprite.SetRendererColor(backdropRenderer, Color.Lerp(baseColor, Color.Lerp(baseColor, accentColor, 0.12f), pulse * 0.35f));
 
         for (int i = 0; i < gridRenderers.Length; i++)
         {
             Color c = accentColor;
-            c.a = Mathf.Lerp(0.08f, 0.22f, pulse);
-            gridRenderers[i].material.color = c;
+            c.a = Mathf.Lerp(0.045f, 0.14f, pulse);
+            SoftVisualSprite.SetRendererColor(gridRenderers[i], c);
         }
 
         for (int i = 0; i < borderRenderers.Length; i++)
         {
             Color c = Color.Lerp(dangerColor, accentColor, pulse * 0.35f);
-            c.a = Mathf.Lerp(0.45f, 0.85f, pulse);
-            borderRenderers[i].material.color = c;
+            c.a = Mathf.Lerp(0.32f, 0.62f, pulse);
+            SoftVisualSprite.SetRendererColor(borderRenderers[i], c);
         }
 
         for (int i = 0; i < moteRenderers.Length; i++)
         {
             float local = time * (0.6f + i * 0.017f) + i;
+            float localPulse = SoftVisualSprite.Smooth01(0.5f + Mathf.Sin(local * 2.1f) * 0.5f);
             Transform mote = moteRenderers[i].transform;
             mote.localPosition = moteBasePositions[i] + new Vector3(
                 Mathf.Sin(local * 1.7f) * 0.12f,
                 Mathf.Cos(local * 1.1f) * 0.18f,
                 0f);
-            mote.localScale = Vector3.one * Mathf.Lerp(0.035f, 0.075f, 0.5f + Mathf.Sin(local * 2.1f) * 0.5f);
+            mote.localScale = Vector3.one * Mathf.Lerp(0.075f, 0.16f, localPulse);
 
             Color c = accentColor;
-            c.a = Mathf.Lerp(0.2f, 0.7f, 0.5f + Mathf.Sin(local) * 0.5f);
-            moteRenderers[i].material.color = c;
+            c.a = Mathf.Lerp(0.08f, 0.32f, SoftVisualSprite.Smooth01(0.5f + Mathf.Sin(local) * 0.5f));
+            SoftVisualSprite.SetRendererColor(moteRenderers[i], c);
         }
     }
 
@@ -184,7 +185,7 @@ public class ArenaVisualDirector : MonoBehaviour
             Color color = accentColor;
             color.a = 0.35f;
             moteBasePositions[i] = pos;
-            moteRenderers[i] = CreateQuad("Mote", motesRoot, pos, Vector2.one * 0.055f, color, -35);
+            moteRenderers[i] = SoftVisualSprite.CreateRenderer("Mote", motesRoot, pos, Vector2.one * 0.12f, color, -35);
         }
     }
 

@@ -17,7 +17,9 @@ public class VisualDesignEditModeTests
             Assert.IsNotNull(arenaObject.transform.Find("ArenaBackdrop"));
             Assert.IsNotNull(arenaObject.transform.Find("ArenaGrid"));
             Assert.IsNotNull(arenaObject.transform.Find("ArenaBorder"));
-            Assert.IsNotNull(arenaObject.transform.Find("ArenaMotes"));
+            Transform motes = arenaObject.transform.Find("ArenaMotes");
+            Assert.IsNotNull(motes);
+            Assert.IsNotNull(motes.GetComponentInChildren<SpriteRenderer>());
             Assert.Greater(arenaObject.GetComponentsInChildren<Renderer>(true).Length, 12);
         }
         finally
@@ -37,12 +39,40 @@ public class VisualDesignEditModeTests
 
             Assert.IsNotNull(fx);
             Assert.IsNotNull(actor.transform.Find("ActorVisualFx"));
-            Assert.IsNotNull(actor.transform.Find("ActorVisualFx/Aura"));
-            Assert.IsNotNull(actor.transform.Find("ActorVisualFx/CoreGlow"));
+            Assert.IsNotNull(actor.transform.Find("ActorVisualFx/Aura").GetComponent<SpriteRenderer>());
+            Assert.IsNotNull(actor.transform.Find("ActorVisualFx/CoreGlow").GetComponent<SpriteRenderer>());
         }
         finally
         {
             UnityEngine.Object.DestroyImmediate(actor);
+        }
+    }
+
+    [Test]
+    public void SoftVisualSpriteCreatesReusableCircle()
+    {
+        Sprite sprite = SoftVisualSprite.SoftCircle;
+
+        Assert.IsNotNull(sprite);
+        Assert.IsNotNull(sprite.texture);
+        Assert.AreEqual(FilterMode.Bilinear, sprite.texture.filterMode);
+    }
+
+    [Test]
+    public void ParticleBurstUsesSoftSpriteParticles()
+    {
+        ParticleBurst.Burst(Vector3.zero, Color.cyan, 4, 1f, 0.2f);
+        GameObject burst = GameObject.Find("ParticleBurst");
+
+        try
+        {
+            Assert.IsNotNull(burst);
+            Assert.GreaterOrEqual(burst.GetComponentsInChildren<SpriteRenderer>().Length, 4);
+        }
+        finally
+        {
+            if (burst != null)
+                UnityEngine.Object.DestroyImmediate(burst);
         }
     }
 }

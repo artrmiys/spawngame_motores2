@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// Quick particle burst effect for hits, deaths, spawns.
-/// Creates small colored squares that explode outward then fade.
+/// Creates soft colored sprites that drift outward then fade.
 /// </summary>
 public class ParticleBurst : MonoBehaviour
 {
@@ -14,26 +14,21 @@ public class ParticleBurst : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            var particle = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            particle.transform.SetParent(parent.transform, false);
-            particle.transform.localScale = Vector3.one * 0.12f;
-
-            // Remove default collider
-            var collider = particle.GetComponent<Collider>();
-            if (collider) Object.Destroy(collider);
-
-            var renderer = particle.GetComponent<Renderer>();
-            if (renderer) renderer.material.color = color;
+            Color particleColor = color;
+            particleColor.a = Mathf.Min(0.9f, color.a);
+            SpriteRenderer renderer = SoftVisualSprite.CreateRenderer("Particle", parent.transform, Vector3.zero,
+                Vector2.one * Random.Range(0.12f, 0.19f), particleColor, 45);
 
             float angle = (360f / count) * i + Random.Range(-15f, 15f);
             float speed = Random.Range(spread * 0.5f, spread);
             Vector3 dir = new Vector3(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad), 0);
 
-            var mover = particle.AddComponent<ParticleMover>();
-            mover.Initialize(dir * speed, lifetime, color);
+            var mover = renderer.gameObject.AddComponent<ParticleMover>();
+            mover.Initialize(dir * speed, lifetime, particleColor);
         }
 
-        Object.Destroy(parent, lifetime + 0.1f);
+        if (Application.isPlaying)
+            Object.Destroy(parent, lifetime + 0.2f);
     }
 }
 
@@ -42,35 +37,38 @@ public class ParticleMover : MonoBehaviour
     private Vector3 velocity;
     private float lifetime;
     private float elapsed;
-    private Renderer rend;
+    private SpriteRenderer rend;
     private Color startColor;
+    private Vector3 startScale;
 
     public void Initialize(Vector3 vel, float life, Color color)
     {
         velocity = vel;
-        lifetime = life;
+        lifetime = Mathf.Max(0.05f, life);
         startColor = color;
-        rend = GetComponent<Renderer>();
+        startScale = transform.localScale;
+        rend = GetComponent<SpriteRenderer>();
     }
 
     void Update()
     {
         elapsed += Time.deltaTime;
-        float t = elapsed / lifetime;
+        float t = Mathf.Clamp01(elapsed / lifetime);
 
-        // Move + decelerate
-        transform.position += velocity * Time.deltaTime;
-        velocity = Vector3.Lerp(velocity, Vector3.zero, Time.deltaTime * 4f);
+        float drift = 1f - SoftVisualSprite.Smooth01(t);
+        transform.position += velocity * drift * Time.deltaTime;
+        velocity = Vector3.Lerp(velocity, Vector3.zero, Time.deltaTime * 3.2f);
 
-        // Shrink
-        transform.localScale = Vector3.one * 0.12f * Mathf.Lerp(1f, 0f, t);
+        transform.localScale = startScale * Mathf.Lerp(1f, 1.85f, SoftVisualSprite.EaseOut(t));
 
-        // Fade
         if (rend != null)
         {
             Color c = startColor;
-            c.a = Mathf.Lerp(1f, 0f, t);
-            rend.material.color = c;
+            c.a = startColor.a * (1f - SoftVisualSprite.Smooth01(t));
+            rend.color = c;
         }
+
+        if (t >= 1f && Application.isPlaying)
+            Destroy(gameObject);
     }
 }

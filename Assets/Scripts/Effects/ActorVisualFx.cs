@@ -16,8 +16,8 @@ public class ActorVisualFx : MonoBehaviour
     [SerializeField] bool leaveTrail;
 
     Transform visualRoot;
-    Renderer auraRenderer;
-    Renderer coreRenderer;
+    SpriteRenderer auraRenderer;
+    SpriteRenderer coreRenderer;
     float trailTimer;
     bool configured;
 
@@ -86,9 +86,15 @@ public class ActorVisualFx : MonoBehaviour
         visualRoot.localPosition = Vector3.zero;
         visualRoot.localRotation = Quaternion.identity;
 
-        auraRenderer = CreateVisualQuad(AuraName, visualRoot, Vector3.zero, Vector2.one * auraScale, accentColor, -1);
-        coreRenderer = CreateVisualQuad(CoreName, visualRoot, new Vector3(0f, 0f, -0.015f),
-            Vector2.one * Mathf.Max(0.28f, auraScale * 0.42f), Color.Lerp(accentColor, Color.white, 0.35f), 1);
+        Color auraColor = accentColor;
+        auraColor.a = 0.24f;
+        auraRenderer = SoftVisualSprite.CreateRenderer(AuraName, visualRoot, Vector3.zero,
+            Vector2.one * auraScale, auraColor, -1);
+
+        Color coreColor = Color.Lerp(accentColor, Color.white, 0.35f);
+        coreColor.a = 0.5f;
+        coreRenderer = SoftVisualSprite.CreateRenderer(CoreName, visualRoot, new Vector3(0f, 0f, -0.015f),
+            Vector2.one * Mathf.Max(0.28f, auraScale * 0.42f), coreColor, 1);
     }
 
     void Update()
@@ -97,7 +103,7 @@ public class ActorVisualFx : MonoBehaviour
             return;
 
         float time = Time.time;
-        float pulse = 0.5f + Mathf.Sin(time * pulseSpeed) * 0.5f;
+        float pulse = SoftVisualSprite.Smooth01(0.5f + Mathf.Sin(time * pulseSpeed) * 0.5f);
         visualRoot.localRotation = Quaternion.Euler(0f, 0f, time * GetSpinSpeed());
 
         if (auraRenderer != null)
@@ -105,8 +111,8 @@ public class ActorVisualFx : MonoBehaviour
             float scale = Mathf.Lerp(auraScale * 0.85f, auraScale * 1.15f, pulse);
             auraRenderer.transform.localScale = Vector3.one * scale;
             Color color = accentColor;
-            color.a = Mathf.Lerp(0.16f, 0.38f, pulse);
-            auraRenderer.material.color = color;
+            color.a = Mathf.Lerp(0.1f, 0.28f, pulse);
+            auraRenderer.color = color;
         }
 
         if (coreRenderer != null)
@@ -114,8 +120,8 @@ public class ActorVisualFx : MonoBehaviour
             float scale = Mathf.Lerp(auraScale * 0.28f, auraScale * 0.46f, pulse);
             coreRenderer.transform.localScale = Vector3.one * scale;
             Color color = Color.Lerp(accentColor, Color.white, 0.4f);
-            color.a = Mathf.Lerp(0.28f, 0.65f, pulse);
-            coreRenderer.material.color = color;
+            color.a = Mathf.Lerp(0.26f, 0.58f, pulse);
+            coreRenderer.color = color;
         }
 
         if (leaveTrail)
@@ -128,8 +134,8 @@ public class ActorVisualFx : MonoBehaviour
         if (trailTimer > 0f)
             return;
 
-        trailTimer = role == VisualRole.Projectile ? 0.045f : 0.09f;
-        VisualAfterimage.Spawn(transform, accentColor, role == VisualRole.Projectile ? 0.16f : 0.28f);
+        trailTimer = role == VisualRole.Projectile ? 0.06f : 0.12f;
+        VisualAfterimage.Spawn(transform, accentColor, role == VisualRole.Projectile ? 0.24f : 0.36f);
     }
 
     float GetSpinSpeed()
@@ -150,41 +156,6 @@ public class ActorVisualFx : MonoBehaviour
             DestroyGeneratedObject(existing.gameObject);
     }
 
-    static Renderer CreateVisualQuad(string name, Transform parent, Vector3 localPosition, Vector2 size, Color color, int sortingOrder)
-    {
-        GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        quad.name = name;
-        quad.transform.SetParent(parent, false);
-        quad.transform.localPosition = localPosition;
-        quad.transform.localScale = new Vector3(size.x, size.y, 1f);
-
-        Collider collider = quad.GetComponent<Collider>();
-        if (collider != null)
-            DestroyGeneratedObject(collider);
-
-        Renderer renderer = quad.GetComponent<Renderer>();
-        if (renderer != null)
-        {
-            renderer.material = CreateTransparentMaterial(color);
-            renderer.sortingOrder = sortingOrder;
-        }
-
-        return renderer;
-    }
-
-    static Material CreateTransparentMaterial(Color color)
-    {
-        Shader shader = Shader.Find("Sprites/Default");
-        if (shader == null)
-            shader = Shader.Find("Unlit/Color");
-        if (shader == null)
-            shader = Shader.Find("Standard");
-
-        var material = new Material(shader);
-        material.color = color;
-        return material;
-    }
-
     static void DestroyGeneratedObject(Object obj)
     {
         if (obj == null)
@@ -199,7 +170,7 @@ public class ActorVisualFx : MonoBehaviour
 
 public class VisualAfterimage : MonoBehaviour
 {
-    Renderer rend;
+    SpriteRenderer rend;
     Color color;
     float lifetime;
     float elapsed;
@@ -210,16 +181,15 @@ public class VisualAfterimage : MonoBehaviour
         if (source == null)
             return;
 
-        GameObject ghost = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        var ghost = new GameObject("Afterimage");
         ghost.name = "Afterimage";
         ghost.transform.position = source.position;
         ghost.transform.rotation = source.rotation;
         ghost.transform.localScale = source.lossyScale * 1.15f;
 
-        Collider collider = ghost.GetComponent<Collider>();
-        if (collider != null)
-            Destroy(collider);
-
+        SpriteRenderer renderer = ghost.AddComponent<SpriteRenderer>();
+        renderer.sprite = SoftVisualSprite.SoftCircle;
+        renderer.sortingOrder = -2;
         var afterimage = ghost.AddComponent<VisualAfterimage>();
         afterimage.Initialize(color, lifetime);
     }
@@ -227,34 +197,25 @@ public class VisualAfterimage : MonoBehaviour
     void Initialize(Color newColor, float newLifetime)
     {
         color = newColor;
-        color.a = 0.32f;
+        color.a = 0.24f;
         lifetime = Mathf.Max(0.05f, newLifetime);
         startScale = transform.localScale;
-        rend = GetComponent<Renderer>();
+        rend = GetComponent<SpriteRenderer>();
         if (rend != null)
-        {
-            Shader shader = Shader.Find("Sprites/Default");
-            if (shader == null)
-                shader = Shader.Find("Unlit/Color");
-            if (shader == null)
-                shader = Shader.Find("Standard");
-            rend.material = new Material(shader);
-            rend.material.color = color;
-            rend.sortingOrder = -2;
-        }
+            rend.color = color;
     }
 
     void Update()
     {
         elapsed += Time.deltaTime;
         float t = Mathf.Clamp01(elapsed / lifetime);
-        transform.localScale = Vector3.Lerp(startScale, startScale * 1.65f, t);
+        transform.localScale = Vector3.Lerp(startScale, startScale * 1.9f, SoftVisualSprite.EaseOut(t));
 
         if (rend != null)
         {
             Color c = color;
-            c.a = Mathf.Lerp(color.a, 0f, t);
-            rend.material.color = c;
+            c.a = color.a * (1f - SoftVisualSprite.Smooth01(t));
+            rend.color = c;
         }
 
         if (t >= 1f)
