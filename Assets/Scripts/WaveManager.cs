@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class WaveManager : MonoBehaviour
@@ -7,33 +6,33 @@ public class WaveManager : MonoBehaviour
     public static WaveManager Instance { get; private set; }
 
     [SerializeField] GameObject enemyPrefab;
-    [SerializeField] float      spawnRadius  = 8f;
-    [SerializeField] Vector2    playAreaHalfExtents = new Vector2(4.35f, 8.35f);
-    [SerializeField] float      spawnEdgeInset = 0.85f;
-    [SerializeField] float      minPlayerSpawnDistance = 3.5f;
-    [SerializeField] float      maxSpawnInterval = 0.76f;
-    [SerializeField] float      firstWaveDelay = 0.35f;
-    [SerializeField] float      waveEndDelay = 0.75f;
-    [SerializeField] int        baseEnemies  = 5;
-    [SerializeField] int        levelWaveCount = 5;
-    [SerializeField] string     levelTitle = "Level";
-    [SerializeField] bool       showSymbolDoor = true;
+    [SerializeField] float spawnRadius = 8f;
+    [SerializeField] Vector2 playAreaHalfExtents = new Vector2(4.35f, 8.35f);
+    [SerializeField] float spawnEdgeInset = 0.85f;
+    [SerializeField] float minPlayerSpawnDistance = 3.5f;
+    [SerializeField] float maxSpawnInterval = 0.76f;
+    [SerializeField] float firstWaveDelay = 0.35f;
+    [SerializeField] float waveEndDelay = 0.75f;
+    [SerializeField] int baseEnemies = 5;
+    [SerializeField] int levelWaveCount = 5;
+    [SerializeField] string levelTitle = "Level";
+    [SerializeField] bool showSymbolDoor = true;
 
     [Header("Enemy variants")]
-    [SerializeField] int        fastEnemyEvery = 4;
-    [SerializeField] float      fastEnemySpeedMultiplier = 1.75f;
-    [SerializeField] int        fastEnemyMaxHp = 1;
-    [SerializeField] float      fastEnemyScaleMultiplier = 1.2f;
-    [SerializeField] Color      fastEnemyColor = new Color(1f, 0.75f, 0.15f);
+    [SerializeField] int fastEnemyEvery = 4;
+    [SerializeField] float fastEnemySpeedMultiplier = 1.75f;
+    [SerializeField] int fastEnemyMaxHp = 1;
+    [SerializeField] float fastEnemyScaleMultiplier = 1.2f;
+    [SerializeField] Color fastEnemyColor = new Color(1f, 0.75f, 0.15f);
 
-    int   _totalWaves;
-    int   _currentWave;
-    int   _enemiesAlive;
-    int   _enemiesLeftToSpawn;
+    int _totalWaves;
+    int _currentWave;
+    int _enemiesAlive;
+    int _enemiesLeftToSpawn;
     float _spawnInterval;
-    bool  _waveActive;
-    bool  _doorPassed = false;
-    int   _spawnSequence;
+    bool _waveActive;
+    bool _doorPassed;
+    int _spawnSequence;
     Transform _player;
 
     void Awake()
@@ -44,11 +43,10 @@ public class WaveManager : MonoBehaviour
 
     IEnumerator Start()
     {
-        // Wait for RemoteConfig
         yield return new WaitUntil(() =>
             RemoteConfigManager.Instance == null || RemoteConfigManager.Instance.IsReady);
 
-        _totalWaves    = levelWaveCount;
+        _totalWaves = levelWaveCount;
         _spawnInterval = GetSpawnInterval();
         _player = GameObject.FindGameObjectWithTag("Player")?.transform;
 
@@ -69,8 +67,8 @@ public class WaveManager : MonoBehaviour
 
         int count = baseEnemies + (_currentWave - 1) * 2;
         _enemiesLeftToSpawn = count;
-        _enemiesAlive       = count;
-        _waveActive         = true;
+        _enemiesAlive = count;
+        _waveActive = true;
 
         UIManager.Instance?.SetWave(_currentWave, _totalWaves);
         UIManager.Instance?.ShowMessage($"Wave {_currentWave}");
@@ -194,69 +192,38 @@ public class WaveManager : MonoBehaviour
         yield return new WaitForSeconds(waveEndDelay);
 
         if (showSymbolDoor && !_doorPassed && _currentWave < _totalWaves)
-        {
             yield return StartCoroutine(ShowSymbolDoorSafely());
-        }
 
         StartCoroutine(StartNextWave());
     }
 
     IEnumerator ShowSymbolDoorSafely()
     {
-        // Use reflection to avoid .csproj compile issues
-        // This allows Symbol Door to work even if .csproj is outdated
-
-        System.Type doorType = System.Type.GetType("SymbolDoor");
-        if (doorType == null)
-        {
-            Debug.LogWarning("[WaveManager] SymbolDoor not compiled yet");
-            yield break;
-        }
-
-        GameObject doorObj = GameObject.Find("SymbolDoor");
-        if (doorObj == null)
-        {
-            Debug.LogWarning("[WaveManager] SymbolDoor GameObject not in scene");
-            yield break;
-        }
-
-        var doorComponent = doorObj.GetComponent(doorType);
-        if (doorComponent == null)
-        {
-            Debug.LogWarning("[WaveManager] SymbolDoor component missing");
-            yield break;
-        }
-
         Time.timeScale = 0f;
 
-        // Prepare puzzle data
-        var symbols = new List<string> { "☀️", "🌙", "🕐" };
-        var meanings = new List<string> { "день", "ночь", "время" };
-        var pairs = new Dictionary<string, string>
-        {
-            { "☀️", "день" },
-            { "🌙", "ночь" },
-            { "🕐", "время" }
-        };
+        SymbolDoor door = GetOrCreateSymbolDoor();
+        var puzzle = SymbolDoorPuzzleBuilder.CreateDefault().Build();
+        door.ShowPuzzle(puzzle.Symbols, puzzle.Meanings, puzzle.CorrectPairs);
 
-        // Call ShowPuzzle via reflection
-        var showMethod = doorType.GetMethod("ShowPuzzle", new System.Type[]
-        {
-            typeof(List<string>),
-            typeof(List<string>),
-            typeof(Dictionary<string, string>)
-        });
-
-        if (showMethod != null)
-        {
-            showMethod.Invoke(doorComponent, new object[] { symbols, meanings, pairs });
-        }
-
-        // Wait for door to finish
-        yield return new WaitUntil(() => !doorObj.activeSelf);
+        yield return new WaitUntil(() => door == null || !door.gameObject.activeSelf);
 
         Time.timeScale = 1f;
         _doorPassed = true;
         UIManager.Instance?.ShowMessage("Door passed!", 1f);
+    }
+
+    SymbolDoor GetOrCreateSymbolDoor()
+    {
+        SymbolDoor door = FindObjectOfType<SymbolDoor>(true);
+        if (door != null)
+        {
+            door.gameObject.SetActive(true);
+            return door;
+        }
+
+        if (FindObjectOfType<SymbolDoorEventManager>(true) == null)
+            new GameObject("SymbolDoorEventManager").AddComponent<SymbolDoorEventManager>();
+
+        return new GameObject("SymbolDoor").AddComponent<SymbolDoor>();
     }
 }

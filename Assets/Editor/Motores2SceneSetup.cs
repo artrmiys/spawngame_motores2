@@ -247,6 +247,9 @@ public static class Motores2SceneSetup
         var gameManager = gameManagerObject.AddComponent<GameManager>();
         SetString(gameManager, "nextSceneName", nextSceneName);
 
+        new GameObject("SymbolDoorEventManager").AddComponent<SymbolDoorEventManager>();
+        new GameObject("SymbolDoor").AddComponent<SymbolDoor>();
+
         var powerUpSpawnerObject = new GameObject("PowerUpSpawner");
         var powerUpSpawner = powerUpSpawnerObject.AddComponent<PowerUpSpawner>();
         SetObject(powerUpSpawner, "healPrefab", healPrefab);

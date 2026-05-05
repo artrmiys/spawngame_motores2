@@ -27,6 +27,11 @@ public class SymbolDoorView : MonoBehaviour
     private Button checkButton;
     private Button resetButton;
 
+    void Awake()
+    {
+        EnsureCanvas();
+    }
+
     [System.Serializable]
     private class SymbolButton
     {
@@ -53,8 +58,33 @@ public class SymbolDoorView : MonoBehaviour
             return;
         }
 
+        EnsureCanvas();
         CreateMainLayout(symbols, meanings, controller);
         ApplyProfessionalStyling();
+    }
+
+    private void EnsureCanvas()
+    {
+        if (canvas == null)
+            canvas = GetComponent<Canvas>();
+
+        if (canvas == null)
+            canvas = gameObject.AddComponent<Canvas>();
+
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 100;
+
+        var scaler = GetComponent<CanvasScaler>();
+        if (scaler == null)
+            scaler = gameObject.AddComponent<CanvasScaler>();
+
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1080, 1920);
+        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+        scaler.matchWidthOrHeight = 0.5f;
+
+        if (GetComponent<GraphicRaycaster>() == null)
+            gameObject.AddComponent<GraphicRaycaster>();
     }
 
     private void CreateMainLayout(List<string> symbols, List<string> meanings, SymbolDoorController controller)

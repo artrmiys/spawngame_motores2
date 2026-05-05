@@ -55,7 +55,8 @@ public class SymbolDoor : MonoBehaviour
         config ??= defaultConfig;
         if (config == null)
         {
-            Debug.LogError("[SymbolDoor] No puzzle config provided!");
+            var puzzle = SymbolDoorPuzzleBuilder.CreateDefault().Build();
+            ShowPuzzle(puzzle.Symbols, puzzle.Meanings, puzzle.CorrectPairs);
             return;
         }
 
@@ -117,6 +118,9 @@ public class SymbolDoor : MonoBehaviour
             view = Instantiate(viewPrefab, transform);
 
         if (view == null)
+            view = CreateRuntimeView();
+
+        if (view == null)
         {
             Debug.LogError("[SymbolDoor] View prefab not set!");
             return;
@@ -169,5 +173,63 @@ public class SymbolDoor : MonoBehaviour
             StopCoroutine(openRoutine);
             openRoutine = null;
         }
+    }
+
+    private SymbolDoorView CreateRuntimeView()
+    {
+        var viewObject = new GameObject("SymbolDoorRuntimeView");
+        viewObject.transform.SetParent(transform, false);
+        return viewObject.AddComponent<SymbolDoorView>();
+    }
+}
+
+public readonly struct SymbolDoorPuzzleData
+{
+    public SymbolDoorPuzzleData(
+        List<string> symbols,
+        List<string> meanings,
+        Dictionary<string, string> correctPairs)
+    {
+        Symbols = symbols;
+        Meanings = meanings;
+        CorrectPairs = correctPairs;
+    }
+
+    public List<string> Symbols { get; }
+    public List<string> Meanings { get; }
+    public Dictionary<string, string> CorrectPairs { get; }
+}
+
+public class SymbolDoorPuzzleBuilder
+{
+    readonly List<string> symbols = new();
+    readonly List<string> meanings = new();
+    readonly Dictionary<string, string> correctPairs = new();
+
+    public static SymbolDoorPuzzleBuilder CreateDefault()
+    {
+        return new SymbolDoorPuzzleBuilder()
+            .AddPair("\u2600", "Day")
+            .AddPair("\u263E", "Night")
+            .AddPair("\u2192", "Go");
+    }
+
+    public SymbolDoorPuzzleBuilder AddPair(string symbol, string meaning)
+    {
+        if (string.IsNullOrEmpty(symbol) || string.IsNullOrEmpty(meaning))
+            return this;
+
+        symbols.Add(symbol);
+        meanings.Add(meaning);
+        correctPairs[symbol] = meaning;
+        return this;
+    }
+
+    public SymbolDoorPuzzleData Build()
+    {
+        return new SymbolDoorPuzzleData(
+            new List<string>(symbols),
+            new List<string>(meanings),
+            new Dictionary<string, string>(correctPairs));
     }
 }
