@@ -8,10 +8,14 @@ public class PowerUpSpawner : MonoBehaviour
     [SerializeField] GameObject spreadShotPrefab;
     [SerializeField] GameObject blastShotPrefab;
     [SerializeField] GameObject powerSnackPrefab;
-    [SerializeField] float      spawnInterval = 15f;
-    [SerializeField] Vector2    spawnHalfExtents = new Vector2(4.7f, 10.7f);
+    [SerializeField] float      spawnInterval = 8f;
+    [SerializeField] Vector2    spawnHalfExtents = new Vector2(4.1f, 8.1f);
 
-    void Start() => InvokeRepeating(nameof(SpawnRandom), spawnInterval, spawnInterval);
+    void Start()
+    {
+        spawnInterval = Mathf.Clamp(spawnInterval, 3f, 12f);
+        InvokeRepeating(nameof(SpawnRandom), spawnInterval, spawnInterval);
+    }
 
     void SpawnRandom()
     {

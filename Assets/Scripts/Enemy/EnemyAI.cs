@@ -1,34 +1,31 @@
-using System.Collections;
 using UnityEngine;
 
-// FSM: Patrol → Chase → Attack → Dead
 [RequireComponent(typeof(Rigidbody2D), typeof(EnemyHealth))]
 public class EnemyAI : MonoBehaviour
 {
-    enum State { Patrol, Chase, Attack, Dead }
+    enum State { Chase, Attack, Dead }
 
     [Header("Movement")]
-    [SerializeField] float detectionRange = 5f;
-    [SerializeField] float attackRange    = 0.8f;
-    [SerializeField] float patrolRadius   = 3f;
+    [SerializeField] float attackRange = 0.8f;
 
     [Header("Combat")]
-    [SerializeField] int   meleeDamage   = 1;
+    [SerializeField] int meleeDamage = 1;
     [SerializeField] float attackCooldown = 1.2f;
+    [SerializeField] float aggressiveAttackCooldownMultiplier = 0.65f;
 
-    State      _state = State.Patrol;
+    State _state = State.Chase;
     Rigidbody2D _rb;
     EnemyHealth _health;
-    Transform   _player;
+    Transform _player;
 
     float _baseSpeed = 3f;
     float _speedMultiplier = 1f;
     float _nextAttackTime;
-    Vector2 _patrolTarget;
+    bool _aggressiveChaser;
 
     void Awake()
     {
-        _rb     = GetComponent<Rigidbody2D>();
+        _rb = GetComponent<Rigidbody2D>();
         _health = GetComponent<EnemyHealth>();
         _health.onDied.AddListener(OnDied);
     }
@@ -37,85 +34,72 @@ public class EnemyAI : MonoBehaviour
     {
         _player = GameObject.FindGameObjectWithTag("Player")?.transform;
         SyncBaseSpeed();
-        SetNewPatrolTarget();
     }
 
     void Update()
     {
-        if (_state == State.Dead) return;
+        if (_state == State.Dead)
+            return;
+
+        if (_player == null)
+            _player = GameObject.FindGameObjectWithTag("Player")?.transform;
+
+        if (_player == null)
+        {
+            _rb.velocity = Vector2.zero;
+            return;
+        }
 
         SyncBaseSpeed();
 
-        switch (_state)
-        {
-            case State.Patrol: TickPatrol(); break;
-            case State.Chase:  TickChase();  break;
-            case State.Attack: TickAttack(); break;
-        }
-    }
-
-    // ── Patrol ──────────────────────────────────────────────────────────────
-    void TickPatrol()
-    {
-        MoveTowards(_patrolTarget, CurrentSpeed * 0.6f);
-
-        if (Vector2.Distance(transform.position, _patrolTarget) < 0.3f)
-            SetNewPatrolTarget();
-
-        if (_player != null && PlayerInRange(detectionRange))
-            _state = State.Chase;
-    }
-
-    void SetNewPatrolTarget()
-    {
-        Vector2 origin = transform.position;
-        _patrolTarget = origin + Random.insideUnitCircle * patrolRadius;
-    }
-
-    // ── Chase ────────────────────────────────────────────────────────────────
-    void TickChase()
-    {
-        if (_player == null) { _state = State.Patrol; return; }
-
-        MoveTowards(_player.position, CurrentSpeed);
-
         if (PlayerInRange(attackRange))
             _state = State.Attack;
-        else if (!PlayerInRange(detectionRange * 1.5f))
-            _state = State.Patrol;
+        else
+            _state = State.Chase;
+
+        if (_state == State.Attack)
+            TickAttack();
+        else
+            TickChase();
     }
 
-    // ── Attack ───────────────────────────────────────────────────────────────
+    void TickChase()
+    {
+        MoveTowards(_player.position, CurrentSpeed);
+    }
+
     void TickAttack()
     {
         _rb.velocity = Vector2.zero;
 
-        if (!PlayerInRange(attackRange)) { _state = State.Chase; return; }
+        if (Time.time < _nextAttackTime)
+            return;
 
-        if (Time.time >= _nextAttackTime)
-        {
-            _nextAttackTime = Time.time + attackCooldown;
-            _player?.GetComponent<PlayerHealth>()?.TakeDamage(meleeDamage);
-        }
+        _nextAttackTime = Time.time + CurrentAttackCooldown;
+        _player.GetComponent<PlayerHealth>()?.TakeDamage(meleeDamage);
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
     void MoveTowards(Vector2 target, float speed)
     {
-        Vector2 dir = ((Vector2)target - (Vector2)transform.position).normalized;
+        Vector2 dir = (target - (Vector2)transform.position).normalized;
         _rb.velocity = dir * speed;
-        if (dir != Vector2.zero) transform.up = dir;
+        if (dir != Vector2.zero)
+            transform.up = dir;
     }
 
     bool PlayerInRange(float range) =>
-        _player != null && Vector2.Distance(transform.position, _player.position) <= range;
+        Vector2.Distance(transform.position, _player.position) <= range;
 
     float CurrentSpeed => _baseSpeed * _speedMultiplier;
+
+    float CurrentAttackCooldown => _aggressiveChaser
+        ? attackCooldown * aggressiveAttackCooldownMultiplier
+        : attackCooldown;
 
     void SyncBaseSpeed()
     {
         if (RemoteConfigManager.Instance != null && RemoteConfigManager.Instance.IsReady)
-            _baseSpeed = RemoteConfigManager.Instance.EnemySpeed;
+            _baseSpeed = Mathf.Max(3.35f, RemoteConfigManager.Instance.EnemySpeed);
     }
 
     public void SetSpeedMultiplier(float multiplier)
@@ -123,12 +107,20 @@ public class EnemyAI : MonoBehaviour
         _speedMultiplier = Mathf.Max(0.1f, multiplier);
     }
 
-    void OnDied() => _state = State.Dead;
+    public void SetAggressiveChaser(bool value)
+    {
+        _aggressiveChaser = value;
+        _state = State.Chase;
+    }
+
+    void OnDied()
+    {
+        _state = State.Dead;
+        _rb.velocity = Vector2.zero;
+    }
 
     void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, detectionRange);
         Gizmos.color = Color.magenta;
         Gizmos.DrawWireSphere(transform.position, attackRange);
     }

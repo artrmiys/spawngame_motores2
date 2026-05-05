@@ -44,12 +44,14 @@ public class GameManager : MonoBehaviour
     public void RestartGame()
     {
         Time.timeScale = 1f;
+        AutoAttack.ResetPersistedWeaponLevel();
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     public void GoToMenu()
     {
         Time.timeScale = 1f;
+        AutoAttack.ResetPersistedWeaponLevel();
         SceneManager.LoadScene("MainMenu");
     }
 

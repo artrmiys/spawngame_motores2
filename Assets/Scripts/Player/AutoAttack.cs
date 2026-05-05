@@ -19,12 +19,15 @@ public class AutoAttack : MonoBehaviour
     public int WeaponLevel { get; private set; }
     public UnityEvent<int> onWeaponLevelChanged = new UnityEvent<int>();
 
+    static int s_persistedWeaponLevel;
     float _nextFireTime;
 
     void Awake()
     {
         if (onWeaponLevelChanged == null)
             onWeaponLevelChanged = new UnityEvent<int>();
+
+        WeaponLevel = Mathf.Clamp(s_persistedWeaponLevel, 0, maxWeaponLevel);
     }
 
     void Update()
@@ -107,7 +110,13 @@ public class AutoAttack : MonoBehaviour
             return;
 
         WeaponLevel = clamped;
+        s_persistedWeaponLevel = clamped;
         onWeaponLevelChanged?.Invoke(WeaponLevel);
+    }
+
+    public static void ResetPersistedWeaponLevel()
+    {
+        s_persistedWeaponLevel = 0;
     }
 
     float GetCurrentFireRate()

@@ -7,10 +7,13 @@ public class WaveManager : MonoBehaviour
     public static WaveManager Instance { get; private set; }
 
     [SerializeField] GameObject enemyPrefab;
-    [SerializeField] float      spawnRadius  = 9f;
-    [SerializeField] Vector2    playAreaHalfExtents = new Vector2(5.1f, 11.1f);
-    [SerializeField] float      spawnEdgeInset = 0.35f;
-    [SerializeField] float      minPlayerSpawnDistance = 4f;
+    [SerializeField] float      spawnRadius  = 8f;
+    [SerializeField] Vector2    playAreaHalfExtents = new Vector2(4.35f, 8.35f);
+    [SerializeField] float      spawnEdgeInset = 0.85f;
+    [SerializeField] float      minPlayerSpawnDistance = 3.5f;
+    [SerializeField] float      maxSpawnInterval = 0.65f;
+    [SerializeField] float      firstWaveDelay = 0.35f;
+    [SerializeField] float      waveEndDelay = 0.75f;
     [SerializeField] int        baseEnemies  = 5;
     [SerializeField] int        levelWaveCount = 5;
     [SerializeField] string     levelTitle = "Level";
@@ -46,12 +49,12 @@ public class WaveManager : MonoBehaviour
             RemoteConfigManager.Instance == null || RemoteConfigManager.Instance.IsReady);
 
         _totalWaves    = levelWaveCount;
-        _spawnInterval = RemoteConfigManager.Instance?.SpawnInterval ?? 2f;
+        _spawnInterval = GetSpawnInterval();
         _player = GameObject.FindGameObjectWithTag("Player")?.transform;
 
         UIManager.Instance?.SetWave(0, _totalWaves);
         UIManager.Instance?.ShowMessage(levelTitle, 1.5f);
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(firstWaveDelay);
         StartCoroutine(StartNextWave());
     }
 
@@ -85,7 +88,7 @@ public class WaveManager : MonoBehaviour
         if (enemyPrefab == null)
             return;
 
-        Vector3 pos = GetSpawnPosition();
+        Vector3 pos = ClampToPlayArea(GetSpawnPosition());
         GameObject enemy = Instantiate(enemyPrefab, pos, Quaternion.identity);
         _spawnSequence++;
 
@@ -95,9 +98,6 @@ public class WaveManager : MonoBehaviour
 
     Vector3 GetSpawnPosition()
     {
-        if (playAreaHalfExtents.x <= 0f || playAreaHalfExtents.y <= 0f)
-            return Random.insideUnitCircle.normalized * spawnRadius;
-
         Vector3 candidate = Vector3.zero;
         for (int i = 0; i < 12; i++)
         {
@@ -111,8 +111,9 @@ public class WaveManager : MonoBehaviour
 
     Vector3 GetEdgeSpawnPosition()
     {
-        float xLimit = Mathf.Max(0.5f, playAreaHalfExtents.x - spawnEdgeInset);
-        float yLimit = Mathf.Max(0.5f, playAreaHalfExtents.y - spawnEdgeInset);
+        Vector2 limits = GetVisibleSpawnHalfExtents();
+        float xLimit = Mathf.Max(0.5f, limits.x);
+        float yLimit = Mathf.Max(0.5f, limits.y);
 
         switch (Random.Range(0, 4))
         {
@@ -131,6 +132,7 @@ public class WaveManager : MonoBehaviour
         enemy.name = "FastFragileEnemy";
         enemy.transform.localScale *= fastEnemyScaleMultiplier;
         enemy.GetComponent<EnemyAI>()?.SetSpeedMultiplier(fastEnemySpeedMultiplier);
+        enemy.GetComponent<EnemyAI>()?.SetAggressiveChaser(true);
         enemy.GetComponent<EnemyHealth>()?.SetMaxHealth(fastEnemyMaxHp);
 
         var renderer = enemy.GetComponent<Renderer>();
@@ -138,6 +140,42 @@ public class WaveManager : MonoBehaviour
             renderer.material.color = fastEnemyColor;
 
         ParticleBurst.Burst(enemy.transform.position, fastEnemyColor, 6, 1.1f, 0.35f);
+    }
+
+    float GetSpawnInterval()
+    {
+        float configured = RemoteConfigManager.Instance?.SpawnInterval ?? maxSpawnInterval;
+        return Mathf.Clamp(Mathf.Min(configured, maxSpawnInterval), 0.15f, 5f);
+    }
+
+    Vector2 GetVisibleSpawnHalfExtents()
+    {
+        Vector2 limits = new Vector2(
+            Mathf.Max(0.5f, playAreaHalfExtents.x - spawnEdgeInset),
+            Mathf.Max(0.5f, playAreaHalfExtents.y - spawnEdgeInset));
+        float legacyRadiusLimit = Mathf.Max(0.5f, spawnRadius - spawnEdgeInset);
+        limits.x = Mathf.Min(limits.x, legacyRadiusLimit);
+        limits.y = Mathf.Min(limits.y, legacyRadiusLimit);
+
+        Camera cam = Camera.main;
+        if (cam != null && cam.orthographic)
+        {
+            float visibleY = cam.orthographicSize - spawnEdgeInset;
+            float visibleX = cam.orthographicSize * cam.aspect - spawnEdgeInset;
+            limits.x = Mathf.Min(limits.x, Mathf.Max(0.5f, visibleX));
+            limits.y = Mathf.Min(limits.y, Mathf.Max(0.5f, visibleY));
+        }
+
+        return limits;
+    }
+
+    Vector3 ClampToPlayArea(Vector3 position)
+    {
+        Vector2 limits = GetVisibleSpawnHalfExtents();
+        position.x = Mathf.Clamp(position.x, -limits.x, limits.x);
+        position.y = Mathf.Clamp(position.y, -limits.y, limits.y);
+        position.z = 0f;
+        return position;
     }
 
     public void OnEnemyKilled()
@@ -153,7 +191,7 @@ public class WaveManager : MonoBehaviour
     IEnumerator WaveEndDelay()
     {
         UIManager.Instance?.ShowMessage("Wave cleared!");
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(waveEndDelay);
 
         if (showSymbolDoor && !_doorPassed && _currentWave < _totalWaves)
         {

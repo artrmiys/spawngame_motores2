@@ -39,7 +39,7 @@ public static class Motores2SceneSetup
         Camera.main.backgroundColor = new Color(0.04f, 0.04f, 0.09f);
         Camera.main.clearFlags = CameraClearFlags.SolidColor;
         Camera.main.orthographic = true;
-        Camera.main.orthographicSize = 10.5f;
+        Camera.main.orthographicSize = 9.5f;
 
         var canvas = MakeCanvas("SplashCanvas");
         var safeArea = MakeSafeArea(canvas);
@@ -199,14 +199,14 @@ public static class Motores2SceneSetup
 
         var ground = GameObject.CreatePrimitive(PrimitiveType.Quad);
         ground.name = "Ground";
-        ground.transform.localScale = new Vector3(12, 24, 1);
+        ground.transform.localScale = new Vector3(10, 18, 1);
         ground.transform.position = Vector3.zero;
         SetColor(ground, groundColor);
 
-        CreateWall("WallTop",    new Vector2(0, 12),  new Vector2(12, 1));
-        CreateWall("WallBottom", new Vector2(0, -12), new Vector2(12, 1));
-        CreateWall("WallLeft",   new Vector2(-6, 0),  new Vector2(1, 24));
-        CreateWall("WallRight",  new Vector2(6, 0),   new Vector2(1, 24));
+        CreateWall("WallTop",    new Vector2(0, 9.15f),  new Vector2(10, 0.8f));
+        CreateWall("WallBottom", new Vector2(0, -9.15f), new Vector2(10, 0.8f));
+        CreateWall("WallLeft",   new Vector2(-5.15f, 0), new Vector2(0.8f, 18));
+        CreateWall("WallRight",  new Vector2(5.15f, 0),  new Vector2(0.8f, 18));
 
         if (hasObstacles)
         {
@@ -225,7 +225,9 @@ public static class Motores2SceneSetup
         var powerSnackPrefab = CreatePowerUpPrefab("PowerSnackPrefab", PowerUpType.PowerSnack, new Color(1f, 0.55f, 0.12f));
 
         var remoteConfig = new GameObject("RemoteConfigManager");
-        remoteConfig.AddComponent<RemoteConfigManager>();
+        var remoteConfigManager = remoteConfig.AddComponent<RemoteConfigManager>();
+        SetFloat(remoteConfigManager, "spawnInterval", 0.65f);
+        SetFloat(remoteConfigManager, "enemySpeed", 3.35f);
 
         var player = CreatePlayer(projectilePrefab, out var playerController);
 
@@ -233,6 +235,10 @@ public static class Motores2SceneSetup
         var waveManager = waveManagerObject.AddComponent<WaveManager>();
         SetObject(waveManager, "enemyPrefab", enemyPrefab);
         SetFloat(waveManager, "spawnRadius", spawnRadius);
+        SetVector2(waveManager, "playAreaHalfExtents", new Vector2(4.35f, 8.35f));
+        SetFloat(waveManager, "maxSpawnInterval", 0.65f);
+        SetFloat(waveManager, "firstWaveDelay", 0.35f);
+        SetFloat(waveManager, "waveEndDelay", 0.75f);
         SetInt(waveManager, "baseEnemies", baseEnemies);
         SetInt(waveManager, "levelWaveCount", waveCount);
         SetString(waveManager, "levelTitle", levelTitle);
@@ -249,6 +255,8 @@ public static class Motores2SceneSetup
         SetObject(powerUpSpawner, "spreadShotPrefab", spreadShotPrefab);
         SetObject(powerUpSpawner, "blastShotPrefab", blastShotPrefab);
         SetObject(powerUpSpawner, "powerSnackPrefab", powerSnackPrefab);
+        SetFloat(powerUpSpawner, "spawnInterval", 8f);
+        SetVector2(powerUpSpawner, "spawnHalfExtents", new Vector2(4.1f, 8.1f));
 
         // Add ScreenShake to camera
         if (Camera.main.gameObject.GetComponent<ScreenShake>() == null)
@@ -659,6 +667,21 @@ public static class Motores2SceneSetup
         }
 
         property.floatValue = value;
+        serializedObject.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(target);
+    }
+
+    static void SetVector2(Object target, string fieldName, Vector2 value)
+    {
+        var serializedObject = new SerializedObject(target);
+        var property = serializedObject.FindProperty(fieldName);
+        if (property == null)
+        {
+            Debug.LogWarning($"[Motores2] Missing serialized Vector2 '{fieldName}' on {target.name}.");
+            return;
+        }
+
+        property.vector2Value = value;
         serializedObject.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(target);
     }
