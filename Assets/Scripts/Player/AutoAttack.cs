@@ -90,6 +90,11 @@ public class AutoAttack : MonoBehaviour
         SetWeaponLevel(Mathf.Max(WeaponLevel, requestedLevel));
     }
 
+    public void UpgradeWeaponLevel()
+    {
+        SetWeaponLevel(WeaponLevel + 1);
+    }
+
     public void ResetWeaponLevel()
     {
         SetWeaponLevel(0);

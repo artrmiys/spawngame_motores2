@@ -7,6 +7,7 @@ public class PowerUpSpawner : MonoBehaviour
     [SerializeField] GameObject rapidFirePrefab;
     [SerializeField] GameObject spreadShotPrefab;
     [SerializeField] GameObject blastShotPrefab;
+    [SerializeField] GameObject powerSnackPrefab;
     [SerializeField] float      spawnInterval = 15f;
     [SerializeField] Vector2    spawnHalfExtents = new Vector2(4.7f, 10.7f);
 
@@ -32,8 +33,9 @@ public class PowerUpSpawner : MonoBehaviour
         float roll = Random.value;
         if (roll < 0.18f) return PowerUpType.Heal;
         if (roll < 0.34f) return PowerUpType.SpeedBoost;
-        if (roll < 0.60f) return PowerUpType.RapidFire;
-        if (roll < 0.83f) return PowerUpType.SpreadShot;
+        if (roll < 0.55f) return PowerUpType.PowerSnack;
+        if (roll < 0.72f) return PowerUpType.RapidFire;
+        if (roll < 0.88f) return PowerUpType.SpreadShot;
         return PowerUpType.BlastShot;
     }
 
@@ -53,6 +55,7 @@ public class PowerUpSpawner : MonoBehaviour
             PowerUpType.RapidFire => rapidFirePrefab,
             PowerUpType.SpreadShot => spreadShotPrefab,
             PowerUpType.BlastShot => blastShotPrefab,
+            PowerUpType.PowerSnack => powerSnackPrefab,
             _ => null
         };
 

@@ -222,6 +222,7 @@ public static class Motores2SceneSetup
         var rapidFirePrefab = CreatePowerUpPrefab("RapidFirePowerUpPrefab", PowerUpType.RapidFire, new Color(1f, 0.85f, 0.2f));
         var spreadShotPrefab = CreatePowerUpPrefab("SpreadShotPowerUpPrefab", PowerUpType.SpreadShot, new Color(0.95f, 0.35f, 1f));
         var blastShotPrefab = CreatePowerUpPrefab("BlastShotPowerUpPrefab", PowerUpType.BlastShot, new Color(1f, 0.45f, 0.1f));
+        var powerSnackPrefab = CreatePowerUpPrefab("PowerSnackPrefab", PowerUpType.PowerSnack, new Color(1f, 0.55f, 0.12f));
 
         var remoteConfig = new GameObject("RemoteConfigManager");
         remoteConfig.AddComponent<RemoteConfigManager>();
@@ -247,6 +248,7 @@ public static class Motores2SceneSetup
         SetObject(powerUpSpawner, "rapidFirePrefab", rapidFirePrefab);
         SetObject(powerUpSpawner, "spreadShotPrefab", spreadShotPrefab);
         SetObject(powerUpSpawner, "blastShotPrefab", blastShotPrefab);
+        SetObject(powerUpSpawner, "powerSnackPrefab", powerSnackPrefab);
 
         // Add ScreenShake to camera
         if (Camera.main.gameObject.GetComponent<ScreenShake>() == null)
@@ -394,6 +396,7 @@ public static class Motores2SceneSetup
         var collider = go.AddComponent<CircleCollider2D>();
         collider.isTrigger = true;
         var powerUp = go.AddComponent<PowerUp>();
+        go.AddComponent<PowerUpFoodVisual>();
         SetEnum(powerUp, "type", (int)type);
         return SaveAsGeneratedPrefab(go, name);
     }
