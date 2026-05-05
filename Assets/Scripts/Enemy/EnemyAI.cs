@@ -34,6 +34,7 @@ public class EnemyAI : MonoBehaviour
     {
         _player = GameObject.FindGameObjectWithTag("Player")?.transform;
         SyncBaseSpeed();
+        EnsureVisuals();
     }
 
     void Update()
@@ -111,6 +112,17 @@ public class EnemyAI : MonoBehaviour
     {
         _aggressiveChaser = value;
         _state = State.Chase;
+        EnsureVisuals();
+    }
+
+    void EnsureVisuals()
+    {
+        var renderer = GetComponent<Renderer>();
+        Color color = renderer != null ? renderer.material.color : new Color(1f, 0.25f, 0.25f);
+        ActorVisualFx.VisualRole role = _aggressiveChaser
+            ? ActorVisualFx.VisualRole.FastEnemy
+            : ActorVisualFx.VisualRole.Enemy;
+        ActorVisualFx.Ensure(gameObject, role, color);
     }
 
     void OnDied()

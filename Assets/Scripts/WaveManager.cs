@@ -49,6 +49,7 @@ public class WaveManager : MonoBehaviour
         _totalWaves = levelWaveCount;
         _spawnInterval = GetSpawnInterval();
         _player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        ArenaVisualDirector.EnsureInScene(playAreaHalfExtents, levelTitle);
 
         UIManager.Instance?.SetWave(0, _totalWaves);
         UIManager.Instance?.ShowMessage(levelTitle, 1.5f);

@@ -12,7 +12,11 @@ public class Projectile : MonoBehaviour
     float _explosionRadius;
     bool _hasHit;
 
-    void Awake() => _rb = GetComponent<Rigidbody2D>();
+    void Awake()
+    {
+        _rb = GetComponent<Rigidbody2D>();
+        ActorVisualFx.Ensure(gameObject, ActorVisualFx.VisualRole.Projectile, new Color(1f, 0.9f, 0.25f));
+    }
 
     public void Init(Vector2 direction)
     {

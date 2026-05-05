@@ -18,6 +18,8 @@ public class PlayerController : MonoBehaviour
     {
         if (joystick == null)
             joystick = FindObjectOfType<VirtualJoystick>();
+
+        ActorVisualFx.Ensure(gameObject, ActorVisualFx.VisualRole.Player, new Color(0.25f, 0.8f, 1f));
     }
 
     void Update()
