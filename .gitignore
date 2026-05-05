@@ -1,0 +1,65 @@
+# This file specifies intentionally untracked files to ignore
+# https://git-scm.com/docs/gitignore
+
+# Logs
+Logs/
+*.log
+*.unitypackage
+
+# Memento mori
+Temp/
+Builds/
+BuildsDesktop/
+BuildsIOS/
+BuildsAndroid/
+
+# Local Shared Object (Django, Flask)
+*.so
+
+# C++ object files
+*.o
+*.a
+*.so.*
+
+# Monodevelop meta files
+*.pidb
+meta.json
+
+# Unity generated meta files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Visual Studio / MonoDevelop generated
+.csproj
+.unityproj
+.sln
+.userprefs
+.vs/
+.vscode/
+.idea/
+*.sln.DotSettings
+project.lock.json
+packages/
+Package.resolved
+
+# Obj and Bin folders
+obj/
+bin/
+*.exe
+*.dll
+*.pdb
+
+# Rider
+.idea/
+*.sln.iml
+
+# Custom
+Library/
+Assembly-CSharp.csproj
+Assembly-CSharp-Editor.csproj
+Packages/manifest.json.bak
