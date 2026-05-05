@@ -226,7 +226,7 @@ public static class Motores2SceneSetup
 
         var remoteConfig = new GameObject("RemoteConfigManager");
         var remoteConfigManager = remoteConfig.AddComponent<RemoteConfigManager>();
-        SetFloat(remoteConfigManager, "spawnInterval", 0.65f);
+        SetFloat(remoteConfigManager, "spawnInterval", 0.76f);
         SetFloat(remoteConfigManager, "enemySpeed", 3.35f);
 
         var player = CreatePlayer(projectilePrefab, out var playerController);
@@ -236,7 +236,7 @@ public static class Motores2SceneSetup
         SetObject(waveManager, "enemyPrefab", enemyPrefab);
         SetFloat(waveManager, "spawnRadius", spawnRadius);
         SetVector2(waveManager, "playAreaHalfExtents", new Vector2(4.35f, 8.35f));
-        SetFloat(waveManager, "maxSpawnInterval", 0.65f);
+        SetFloat(waveManager, "maxSpawnInterval", 0.76f);
         SetFloat(waveManager, "firstWaveDelay", 0.35f);
         SetFloat(waveManager, "waveEndDelay", 0.75f);
         SetInt(waveManager, "baseEnemies", baseEnemies);

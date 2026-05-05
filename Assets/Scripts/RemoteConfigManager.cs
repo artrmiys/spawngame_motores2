@@ -9,7 +9,7 @@ public class RemoteConfigManager : MonoBehaviour
     [SerializeField] bool powerupEnabled = true;
     [SerializeField] float enemySpeed = 3.35f;
     [SerializeField] float playerSpeed = 5f;
-    [SerializeField] float spawnInterval = 0.65f;
+    [SerializeField] float spawnInterval = 0.76f;
 
     public int WaveCount => waveCount;
     public bool PowerupEnabled => powerupEnabled;

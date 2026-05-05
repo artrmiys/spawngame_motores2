@@ -11,7 +11,7 @@ public class WaveManager : MonoBehaviour
     [SerializeField] Vector2    playAreaHalfExtents = new Vector2(4.35f, 8.35f);
     [SerializeField] float      spawnEdgeInset = 0.85f;
     [SerializeField] float      minPlayerSpawnDistance = 3.5f;
-    [SerializeField] float      maxSpawnInterval = 0.65f;
+    [SerializeField] float      maxSpawnInterval = 0.76f;
     [SerializeField] float      firstWaveDelay = 0.35f;
     [SerializeField] float      waveEndDelay = 0.75f;
     [SerializeField] int        baseEnemies  = 5;

@@ -35,11 +35,11 @@ public class PowerUpSpawner : MonoBehaviour
     PowerUpType PickType()
     {
         float roll = Random.value;
-        if (roll < 0.18f) return PowerUpType.Heal;
-        if (roll < 0.34f) return PowerUpType.SpeedBoost;
-        if (roll < 0.55f) return PowerUpType.PowerSnack;
-        if (roll < 0.72f) return PowerUpType.RapidFire;
-        if (roll < 0.88f) return PowerUpType.SpreadShot;
+        if (roll < 0.234f) return PowerUpType.Heal;
+        if (roll < 0.363f) return PowerUpType.SpeedBoost;
+        if (roll < 0.636f) return PowerUpType.PowerSnack;
+        if (roll < 0.773f) return PowerUpType.RapidFire;
+        if (roll < 0.902f) return PowerUpType.SpreadShot;
         return PowerUpType.BlastShot;
     }
 
