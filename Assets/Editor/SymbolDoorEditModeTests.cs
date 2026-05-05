@@ -24,6 +24,22 @@ public class SymbolDoorEditModeTests
     }
 
     [Test]
+    public void BuilderSkipsInvalidAndDuplicatePairs()
+    {
+        SymbolDoorPuzzleData data = new SymbolDoorPuzzleBuilder()
+            .AddPair("A", "One")
+            .AddPair("", "Empty")
+            .AddPair("B", "")
+            .AddPair("A", "Duplicate")
+            .Build();
+
+        Assert.AreEqual(1, data.Symbols.Count);
+        Assert.AreEqual(1, data.Meanings.Count);
+        Assert.AreEqual("A", data.Symbols[0]);
+        Assert.AreEqual("One", data.CorrectPairs["A"]);
+    }
+
+    [Test]
     public void ModelAcceptsOnlyCompleteCorrectAnswers()
     {
         var symbols = new List<string> { "A", "B", "C" };
@@ -158,6 +174,27 @@ public class SymbolDoorEditModeTests
         }
     }
 
+    [Test]
+    public void EventManagerBroadcastsAnswerCheckedResult()
+    {
+        bool? receivedResult = null;
+
+        try
+        {
+            SymbolDoorEventManager.ClearAllListeners();
+            SymbolDoorEventManager.OnAnswerChecked += result => receivedResult = result;
+
+            SymbolDoorEventManager.RaiseAnswerChecked(true);
+
+            Assert.IsTrue(receivedResult.HasValue);
+            Assert.IsTrue(receivedResult.Value);
+        }
+        finally
+        {
+            SymbolDoorEventManager.ClearAllListeners();
+        }
+    }
+
     private static void AssertRectStretchesToParent(RectTransform rect, string name)
     {
         Assert.IsNotNull(rect, name);
@@ -174,10 +211,12 @@ public static class SymbolDoorAutomatedTestRunner
         var tests = new (string Name, Action Run)[]
         {
             (nameof(SymbolDoorEditModeTests.DefaultBuilderCreatesThreeExpectedPairs), testClass.DefaultBuilderCreatesThreeExpectedPairs),
+            (nameof(SymbolDoorEditModeTests.BuilderSkipsInvalidAndDuplicatePairs), testClass.BuilderSkipsInvalidAndDuplicatePairs),
             (nameof(SymbolDoorEditModeTests.ModelAcceptsOnlyCompleteCorrectAnswers), testClass.ModelAcceptsOnlyCompleteCorrectAnswers),
             (nameof(SymbolDoorEditModeTests.ViewBuildsScalableButtonTiles), testClass.ViewBuildsScalableButtonTiles),
             (nameof(SymbolDoorEditModeTests.ViewSetupRebuildDoesNotDuplicateTiles), testClass.ViewSetupRebuildDoesNotDuplicateTiles),
-            (nameof(SymbolDoorEditModeTests.DoorOpenDelayUsesRealtimeWhileGameIsPaused), testClass.DoorOpenDelayUsesRealtimeWhileGameIsPaused)
+            (nameof(SymbolDoorEditModeTests.DoorOpenDelayUsesRealtimeWhileGameIsPaused), testClass.DoorOpenDelayUsesRealtimeWhileGameIsPaused),
+            (nameof(SymbolDoorEditModeTests.EventManagerBroadcastsAnswerCheckedResult), testClass.EventManagerBroadcastsAnswerCheckedResult)
         };
 
         var lines = new List<string>();

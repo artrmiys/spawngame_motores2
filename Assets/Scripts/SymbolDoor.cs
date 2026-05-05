@@ -32,12 +32,14 @@ public class SymbolDoor : MonoBehaviour
 
     void OnEnable()
     {
+        SymbolDoorEventManager.OnAnswerChecked += HandleAnswerChecked;
         SymbolDoorEventManager.OnDoorOpened += HandleDoorOpened;
         SymbolDoorEventManager.OnDoorFailed += HandleDoorFailed;
     }
 
     void OnDisable()
     {
+        SymbolDoorEventManager.OnAnswerChecked -= HandleAnswerChecked;
         SymbolDoorEventManager.OnDoorOpened -= HandleDoorOpened;
         SymbolDoorEventManager.OnDoorFailed -= HandleDoorFailed;
         StopOpenRoutine();
@@ -160,6 +162,14 @@ public class SymbolDoor : MonoBehaviour
         controller?.OnResetClicked();
     }
 
+    private void HandleAnswerChecked(bool isCorrect)
+    {
+        if (isCorrect)
+            HandleDoorOpened();
+        else
+            HandleDoorFailed();
+    }
+
     private IEnumerator DoorOpenRoutine()
     {
         yield return new WaitForSecondsRealtime(doorOpenDelay);
@@ -218,6 +228,9 @@ public class SymbolDoorPuzzleBuilder
     public SymbolDoorPuzzleBuilder AddPair(string symbol, string meaning)
     {
         if (string.IsNullOrEmpty(symbol) || string.IsNullOrEmpty(meaning))
+            return this;
+
+        if (correctPairs.ContainsKey(symbol))
             return this;
 
         symbols.Add(symbol);

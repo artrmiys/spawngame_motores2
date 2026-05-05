@@ -7,6 +7,7 @@ using UnityEngine;
 /// </summary>
 public class SymbolDoorEventManager : MonoBehaviour
 {
+    public static event Action<bool> OnAnswerChecked;
     public static event Action OnDoorOpened;
     public static event Action OnDoorFailed;
     public static event Action OnPuzzleReset;
@@ -24,6 +25,11 @@ public class SymbolDoorEventManager : MonoBehaviour
         OnDoorOpened?.Invoke();
     }
 
+    public static void RaiseAnswerChecked(bool isCorrect)
+    {
+        OnAnswerChecked?.Invoke(isCorrect);
+    }
+
     public static void RaiseFailed()
     {
         OnDoorFailed?.Invoke();
@@ -36,6 +42,7 @@ public class SymbolDoorEventManager : MonoBehaviour
 
     public static void ClearAllListeners()
     {
+        OnAnswerChecked = null;
         OnDoorOpened = null;
         OnDoorFailed = null;
         OnPuzzleReset = null;

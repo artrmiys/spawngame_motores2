@@ -63,12 +63,12 @@ public class SymbolDoorController : MonoBehaviour
         if (model.CheckAnswers())
         {
             view.PlaySuccessAnimation();
-            SymbolDoorEventManager.RaiseOpened();
+            SymbolDoorEventManager.RaiseAnswerChecked(true);
         }
         else
         {
             view.PlayErrorAnimation();
-            SymbolDoorEventManager.RaiseFailed();
+            SymbolDoorEventManager.RaiseAnswerChecked(false);
         }
     }
 

@@ -81,7 +81,7 @@ public class UIManager : MonoBehaviour
 
     IEnumerator HideMessageRoutine(float delay)
     {
-        yield return new WaitForSeconds(delay);
+        yield return new WaitForSecondsRealtime(delay);
         if (messageText) messageText.gameObject.SetActive(false);
     }
 
