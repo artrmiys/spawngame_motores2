@@ -204,10 +204,18 @@ public class SymbolDoorEditModeTests
     }
 
     [Test]
-    public void PowerUpSpawnIntervalIsTwentyFivePercentFaster()
+    public void PowerUpSpawnIntervalIsHalfOfConfigured()
     {
-        Assert.AreEqual(6f, PowerUpSpawner.GetEffectiveSpawnInterval(8f), 0.001f);
-        Assert.AreEqual(2.25f, PowerUpSpawner.GetEffectiveSpawnInterval(3f), 0.001f);
+        Assert.AreEqual(4f, PowerUpSpawner.GetEffectiveSpawnInterval(8f), 0.001f);
+        Assert.AreEqual(1.5f, PowerUpSpawner.GetEffectiveSpawnInterval(3f), 0.001f);
+    }
+
+    [Test]
+    public void WaveSpawnCountsAreFiftyPercentLonger()
+    {
+        Assert.AreEqual(8, WaveManager.GetWaveEnemySpawnCount(5, 1));
+        Assert.AreEqual(11, WaveManager.GetWaveEnemySpawnCount(5, 2));
+        Assert.AreEqual(14, WaveManager.GetWaveEnemySpawnCount(5, 3));
     }
 
     private static void AssertRectStretchesToParent(RectTransform rect, string name)
@@ -243,7 +251,8 @@ public static class SymbolDoorAutomatedTestRunner
             (nameof(SymbolDoorEditModeTests.ViewSetupRebuildDoesNotDuplicateTiles), testClass.ViewSetupRebuildDoesNotDuplicateTiles),
             (nameof(SymbolDoorEditModeTests.DoorOpenDelayUsesRealtimeWhileGameIsPaused), testClass.DoorOpenDelayUsesRealtimeWhileGameIsPaused),
             (nameof(SymbolDoorEditModeTests.EventManagerBroadcastsAnswerCheckedResult), testClass.EventManagerBroadcastsAnswerCheckedResult),
-            (nameof(SymbolDoorEditModeTests.PowerUpSpawnIntervalIsTwentyFivePercentFaster), testClass.PowerUpSpawnIntervalIsTwentyFivePercentFaster)
+            (nameof(SymbolDoorEditModeTests.PowerUpSpawnIntervalIsHalfOfConfigured), testClass.PowerUpSpawnIntervalIsHalfOfConfigured),
+            (nameof(SymbolDoorEditModeTests.WaveSpawnCountsAreFiftyPercentLonger), testClass.WaveSpawnCountsAreFiftyPercentLonger)
         };
 
         var lines = new List<string>();

@@ -5,6 +5,8 @@ public class WaveManager : MonoBehaviour
 {
     public static WaveManager Instance { get; private set; }
 
+    const float DefaultWaveSpawnCountMultiplier = 1.5f;
+
     [SerializeField] GameObject enemyPrefab;
     [SerializeField] float spawnRadius = 8f;
     [SerializeField] Vector2 playAreaHalfExtents = new Vector2(4.35f, 8.35f);
@@ -14,6 +16,7 @@ public class WaveManager : MonoBehaviour
     [SerializeField] float firstWaveDelay = 0.35f;
     [SerializeField] float waveEndDelay = 0.75f;
     [SerializeField] int baseEnemies = 5;
+    [SerializeField] float waveSpawnCountMultiplier = DefaultWaveSpawnCountMultiplier;
     [SerializeField] int levelWaveCount = 5;
     [SerializeField] string levelTitle = "Level";
     [SerializeField] bool showSymbolDoor = true;
@@ -66,7 +69,7 @@ public class WaveManager : MonoBehaviour
             yield break;
         }
 
-        int count = baseEnemies + (_currentWave - 1) * 2;
+        int count = GetWaveEnemySpawnCount(baseEnemies, _currentWave, waveSpawnCountMultiplier);
         _enemiesLeftToSpawn = count;
         _enemiesAlive = count;
         _waveActive = true;
@@ -145,6 +148,15 @@ public class WaveManager : MonoBehaviour
     {
         float configured = RemoteConfigManager.Instance?.SpawnInterval ?? maxSpawnInterval;
         return Mathf.Clamp(Mathf.Min(configured, maxSpawnInterval), 0.15f, 5f);
+    }
+
+    public static int GetWaveEnemySpawnCount(int baseEnemyCount, int waveNumber, float countMultiplier = DefaultWaveSpawnCountMultiplier)
+    {
+        int safeBase = Mathf.Max(1, baseEnemyCount);
+        int safeWave = Mathf.Max(1, waveNumber);
+        float safeMultiplier = Mathf.Clamp(countMultiplier, 1f, 4f);
+        int baseCount = safeBase + (safeWave - 1) * 2;
+        return Mathf.Max(1, Mathf.CeilToInt(baseCount * safeMultiplier));
     }
 
     Vector2 GetVisibleSpawnHalfExtents()
