@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class PowerUpSpawner : MonoBehaviour
 {
+    const float FasterSpawnMultiplier = 0.75f;
+
     [SerializeField] GameObject healPrefab;
     [SerializeField] GameObject speedPrefab;
     [SerializeField] GameObject rapidFirePrefab;
@@ -13,8 +15,13 @@ public class PowerUpSpawner : MonoBehaviour
 
     void Start()
     {
-        spawnInterval = Mathf.Clamp(spawnInterval, 3f, 12f);
+        spawnInterval = GetEffectiveSpawnInterval(spawnInterval);
         InvokeRepeating(nameof(SpawnRandom), spawnInterval, spawnInterval);
+    }
+
+    public static float GetEffectiveSpawnInterval(float configuredInterval)
+    {
+        return Mathf.Clamp(configuredInterval * FasterSpawnMultiplier, 2.25f, 12f);
     }
 
     void SpawnRandom()

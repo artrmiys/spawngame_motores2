@@ -203,6 +203,13 @@ public class SymbolDoorEditModeTests
         }
     }
 
+    [Test]
+    public void PowerUpSpawnIntervalIsTwentyFivePercentFaster()
+    {
+        Assert.AreEqual(6f, PowerUpSpawner.GetEffectiveSpawnInterval(8f), 0.001f);
+        Assert.AreEqual(2.25f, PowerUpSpawner.GetEffectiveSpawnInterval(3f), 0.001f);
+    }
+
     private static void AssertRectStretchesToParent(RectTransform rect, string name)
     {
         Assert.IsNotNull(rect, name);
@@ -235,7 +242,8 @@ public static class SymbolDoorAutomatedTestRunner
             (nameof(SymbolDoorEditModeTests.ViewBuildsScalableButtonTiles), testClass.ViewBuildsScalableButtonTiles),
             (nameof(SymbolDoorEditModeTests.ViewSetupRebuildDoesNotDuplicateTiles), testClass.ViewSetupRebuildDoesNotDuplicateTiles),
             (nameof(SymbolDoorEditModeTests.DoorOpenDelayUsesRealtimeWhileGameIsPaused), testClass.DoorOpenDelayUsesRealtimeWhileGameIsPaused),
-            (nameof(SymbolDoorEditModeTests.EventManagerBroadcastsAnswerCheckedResult), testClass.EventManagerBroadcastsAnswerCheckedResult)
+            (nameof(SymbolDoorEditModeTests.EventManagerBroadcastsAnswerCheckedResult), testClass.EventManagerBroadcastsAnswerCheckedResult),
+            (nameof(SymbolDoorEditModeTests.PowerUpSpawnIntervalIsTwentyFivePercentFaster), testClass.PowerUpSpawnIntervalIsTwentyFivePercentFaster)
         };
 
         var lines = new List<string>();
